@@ -1,0 +1,6 @@
+---
+BasedOnStyle: LLVM
+AlignAfterOpenBracket: DontAlign
+BinPackArguments: false
+Language: Cpp
+PointerAlignment: Left
