@@ -35,6 +35,7 @@ Lexer::State Lexer::lex_segment() {
   switch (c) {
   case '.':
     if (peek().value_or('\0') == '.') {
+      next();
       emit(TokenType::ddot);
       return LEX_DESCENDANT_SELECTION;
     }
@@ -167,8 +168,13 @@ Lexer::State Lexer::lex_inside_filter() {
     c = next();
 
     if (!c) {
-      error("unbalanced parentheses");
-      return ERROR;
+      m_filter_nesting_level--;
+      if (m_paren_stack.size() == 1) {
+        error("unbalanced parentheses");
+        return ERROR;
+      }
+      backup();
+      return LEX_INSIDE_BRACKETED_SELECTION;
     }
 
     switch (c.value()) {
@@ -187,7 +193,7 @@ Lexer::State Lexer::lex_inside_filter() {
       if (m_paren_stack.size()) {
         continue;
       }
-      m_filter_nesting_level++;
+      m_filter_nesting_level--;
       return LEX_INSIDE_BRACKETED_SELECTION;
     case '\'':
       return LEX_INSIDE_SINGLE_QUOTED_FILTER_STRING;
@@ -337,38 +343,34 @@ Lexer::State Lexer::lex_inside_filter() {
       v = view();
 
       if (v.starts_with("&&")) {
-        emit(TokenType::and_);
         m_pos += 2;
+        emit(TokenType::and_);
         continue;
-        ;
       }
 
       if (v.starts_with("||")) {
-        emit(TokenType::or_);
         m_pos += 2;
+        emit(TokenType::or_);
         continue;
-        ;
       }
 
       if (v.starts_with("true")) {
-        emit(TokenType::true_);
         m_pos += 4;
+        emit(TokenType::true_);
         continue;
         ;
       }
 
       if (v.starts_with("false")) {
-        emit(TokenType::false_);
         m_pos += 5;
+        emit(TokenType::false_);
         continue;
-        ;
       }
 
       if (v.starts_with("null")) {
-        emit(TokenType::null_);
         m_pos += 2;
+        emit(TokenType::null_);
         continue;
-        ;
       }
 
       // Function call?
@@ -643,8 +645,10 @@ std::string_view Lexer::view() const {
 void Lexer::ignore() { m_start = m_pos; }
 
 void Lexer::backup() {
-  assert(m_pos > m_start && "can't backup beyond start");
-  --m_pos;
+  // assert(m_pos > m_start && "can't backup beyond start");
+  if (m_pos > m_start) {
+    --m_pos;
+  }
 }
 
 std::optional<char> Lexer::peek() {
