@@ -5,27 +5,30 @@
 
 namespace libjsonpath {
 
-State Lexer::lexRoot() {
+Lexer::Lexer(std::string_view query)
+    : query_{query}, m_length{query.length()} {};
+
+Lexer::State Lexer::lex_root() {
   const auto c{next()};
   if (c && c.value() != '$') {
     backup();
     error(std::format("expected '$', found '{}'", c.value_or(' ')));
-    return State::error;
+    return ERROR;
   }
   emit(TokenType::root);
-  return State::lexSegment;
+  return LEX_SEGMENT;
 };
 
-State Lexer::lexSegment() {
+Lexer::State Lexer::lex_segment() {
   if (ignore_whitespace() && !(peek())) {
     error("trailing whitespace");
-    return State::error;
+    return ERROR;
   }
 
   const auto maybe_c(next());
   if (!maybe_c) {
     emit(TokenType::eof_);
-    return State::none;
+    return NONE;
   }
 
   const auto c{maybe_c.value()};
@@ -33,75 +36,75 @@ State Lexer::lexSegment() {
   case '.':
     if (peek().value_or('\0') == '.') {
       emit(TokenType::ddot);
-      return State::lexDescendantSelection;
+      return LEX_DESCENDANT_SELECTION;
     }
-    return State::lexDotSelector;
+    return LEX_DOT_SELECTOR;
   case '[':
     emit(TokenType::lbracket);
-    return State::lexInsideBracketedSelection;
+    return LEX_INSIDE_BRACKETED_SELECTION;
   default:
     backup();
-    if (filter_nesting_level_) {
-      return State::lexInsideFilter;
+    if (m_filter_nesting_level) {
+      return LEX_INSIDE_FILTER;
     }
     error(std::format(
         "expected '.', '..' or a bracketed selection, found '{}'", c));
-    return State::error;
+    return ERROR;
   }
 }
 
-State Lexer::lexDescendantSelection() {
+Lexer::State Lexer::lex_descendant_selection() {
   const auto maybe_c(next());
   if (!maybe_c) {
     error("bald descendant segment");
-    return State::error;
+    return ERROR;
   }
 
   const auto c{maybe_c.value()};
   switch (c) {
   case '*':
     emit(TokenType::wild);
-    return State::lexSegment;
+    return LEX_SEGMENT;
   case '[':
     emit(TokenType::lbracket);
-    return State::lexInsideBracketedSelection;
+    return LEX_INSIDE_BRACKETED_SELECTION;
   default:
     backup();
     if (accept_name()) {
       emit(TokenType::name);
-      return State::lexSegment;
+      return LEX_SEGMENT;
     } else {
       error(std::format("unexpected descendant selection token '{}'", c));
-      return State::error;
+      return ERROR;
     }
   }
 }
 
-State Lexer::lexDotSelector() {
+Lexer::State Lexer::lex_dot_selector() {
   ignore(); // Ignore the dot.
 
   if (ignore_whitespace()) {
     error("unexpected whitespace after dot");
-    return State::error;
+    return ERROR;
   }
 
   const auto c{next()};
   if (c && c.value() == '*') {
     emit(TokenType::wild);
-    return State::lexSegment;
+    return LEX_SEGMENT;
   }
 
   backup();
   if (accept_name()) {
     emit(TokenType::name);
-    return State::lexSegment;
+    return LEX_SEGMENT;
   } else {
     error("unexpected shorthand selection");
-    return State::error;
+    return ERROR;
   }
 }
 
-State Lexer::lexInsideBracketedSelection() {
+Lexer::State Lexer::lex_inside_bracketed_selection() {
   std::optional<char> c;
   while (true) {
     ignore_whitespace();
@@ -109,20 +112,20 @@ State Lexer::lexInsideBracketedSelection() {
 
     if (!c) {
       error("unclosed bracketed selection"); // string view literals?
-      return State::error;
+      return ERROR;
     }
 
     switch (c.value()) {
     case ']':
       emit(TokenType::rbracket);
-      return filter_nesting_level_ ? State::lexInsideFilter : State::lexSegment;
+      return m_filter_nesting_level ? LEX_INSIDE_FILTER : LEX_SEGMENT;
     case '*':
       emit(TokenType::wild);
       continue;
     case '?':
       emit(TokenType::filter);
-      filter_nesting_level_++;
-      return State::lexInsideFilter;
+      m_filter_nesting_level++;
+      return LEX_INSIDE_FILTER;
     case ',':
       emit(TokenType::comma);
       continue;
@@ -130,13 +133,13 @@ State Lexer::lexInsideBracketedSelection() {
       emit(TokenType::colon);
       continue;
     case '\'':
-      return State::lexInsideSingleQuotedString;
+      return LEX_INSIDE_SINGLE_QUOTED_STRING;
     case '"':
-      return State::lexInsideDoubleQuotedString;
+      return LEX_INSIDE_DOUBLE_QUOTED_STRING;
     case '-':
-      if (!(accept_run(digits))) {
+      if (!(accept_run(s_digits))) {
         error("expected at least one digit after a minus sign");
-        return State::error;
+        return ERROR;
       }
       // A negative index.
       emit(TokenType::index);
@@ -144,18 +147,18 @@ State Lexer::lexInsideBracketedSelection() {
     default:
       backup();
 
-      if (accept_run(digits)) {
+      if (accept_run(s_digits)) {
         emit(TokenType::index);
         continue;
       } else {
         error("unexpected token in bracketed selection");
-        return State::error;
+        return ERROR;
       }
     }
   }
 }
 
-State Lexer::lexInsideFilter() {
+Lexer::State Lexer::lex_inside_filter() {
   std::optional<char> c;
   std::string_view v;
 
@@ -165,62 +168,62 @@ State Lexer::lexInsideFilter() {
 
     if (!c) {
       error("unbalanced parentheses");
-      return State::error;
+      return ERROR;
     }
 
     switch (c.value()) {
     case ']':
-      filter_nesting_level_--;
-      if (paren_stack_.size() == 1) {
+      m_filter_nesting_level--;
+      if (m_paren_stack.size() == 1) {
         error("unbalanced parentheses");
-        return State::error;
+        return ERROR;
       }
       backup();
-      return State::lexInsideBracketedSelection;
+      return LEX_INSIDE_BRACKETED_SELECTION;
     case ',':
       emit(TokenType::comma);
       // If we have unbalanced parens, we are inside a function call and a
       // comma separates arguments. Otherwise a comma separates selectors.
-      if (paren_stack_.size()) {
+      if (m_paren_stack.size()) {
         continue;
       }
-      filter_nesting_level_++;
-      return State::lexInsideBracketedSelection;
+      m_filter_nesting_level++;
+      return LEX_INSIDE_BRACKETED_SELECTION;
     case '\'':
-      return State::lexInsideSingleQuotedFilterString;
+      return LEX_INSIDE_SINGLE_QUOTED_FILTER_STRING;
     case '"':
-      return State::lexInsideDoubleQuotedFilterString;
+      return LEX_INSIDE_DOUBLE_QUOTED_FILTER_STRING;
     case '(':
       emit(TokenType::lparen);
       // Are we in a function call? If so, a function argument contains parens.
-      if (paren_stack_.size()) {
-        int paren_count{paren_stack_.top()};
-        paren_stack_.pop();
-        paren_stack_.push(paren_count + 1);
+      if (m_paren_stack.size()) {
+        int paren_count{m_paren_stack.top()};
+        m_paren_stack.pop();
+        m_paren_stack.push(paren_count + 1);
         continue;
       }
     case ')':
       emit(TokenType::rparen);
       // Are we closing a function call or a parenthesized expression?
-      if (paren_stack_.size()) {
-        if (paren_stack_.top() == 1) {
-          paren_stack_.pop();
+      if (m_paren_stack.size()) {
+        if (m_paren_stack.top() == 1) {
+          m_paren_stack.pop();
         } else {
-          int paren_count{paren_stack_.top()};
-          paren_stack_.pop();
-          paren_stack_.push(paren_count + 1);
+          int paren_count{m_paren_stack.top()};
+          m_paren_stack.pop();
+          m_paren_stack.push(paren_count + 1);
         }
       }
       continue;
     case '$':
       emit(TokenType::root);
-      return State::lexSegment;
+      return LEX_SEGMENT;
     case '@':
       emit(TokenType::current);
-      return State::lexSegment;
+      return LEX_SEGMENT;
     case '.':
       backup();
-      return State::lexSegment;
+      return LEX_SEGMENT;
     case '!':
       if (peek().value_or(' ') == '=') {
         next();
@@ -236,7 +239,7 @@ State Lexer::lexInsideFilter() {
       } else {
         backup();
         error("unexpected filter selector token '='");
-        return State::error;
+        return ERROR;
       }
     case '<':
       if (peek().value_or(' ') == '=') {
@@ -255,25 +258,25 @@ State Lexer::lexInsideFilter() {
       }
       continue;
     case '-':
-      if (!(accept_run(digits))) {
+      if (!(accept_run(s_digits))) {
         error("at least one digit is required after a minus sign");
-        return State::error;
+        return ERROR;
       }
 
       // A float?
       if (peek().value_or(' ') == '.') {
         next();
-        if (!(accept_run(digits))) {
+        if (!(accept_run(s_digits))) {
           error("a fractional digit is required a decimal point");
-          return State::error;
+          return ERROR;
         }
 
         // Exponent?
         if (accept('e')) {
-          accept(sign);
-          if (!(accept(digits))) {
+          accept(s_sign);
+          if (!(accept(s_digits))) {
             error("at least one exponent digit is required");
-            return State::error;
+            return ERROR;
           }
         }
 
@@ -283,10 +286,10 @@ State Lexer::lexInsideFilter() {
 
       // Exponent?
       if (accept('e')) {
-        accept(sign);
-        if (!(accept(digits))) {
+        accept(s_sign);
+        if (!(accept(s_digits))) {
           error("at least one exponent digit is required");
-          return State::error;
+          return ERROR;
         }
       }
 
@@ -297,20 +300,20 @@ State Lexer::lexInsideFilter() {
       backup();
 
       // Non-negative int or float?
-      if (accept_run(digits)) {
+      if (accept_run(s_digits)) {
         if (peek().value_or(' ') == '.') {
           next();
-          if (!(accept_run(digits))) {
+          if (!(accept_run(s_digits))) {
             error("a fractional digit is required a decimal point");
-            return State::error;
+            return ERROR;
           }
 
           // Exponent?
           if (accept('e')) {
-            accept(sign);
-            if (!(accept(digits))) {
+            accept(s_sign);
+            if (!(accept(s_digits))) {
               error("at least one exponent digit is required");
-              return State::error;
+              return ERROR;
             }
           }
 
@@ -320,10 +323,10 @@ State Lexer::lexInsideFilter() {
 
         // Exponent?
         if (accept('e')) {
-          accept(sign);
-          if (!(accept(digits))) {
+          accept(s_sign);
+          if (!(accept(s_digits))) {
             error("at least one exponent digit is required");
-            return State::error;
+            return ERROR;
           }
         }
 
@@ -335,49 +338,49 @@ State Lexer::lexInsideFilter() {
 
       if (v.starts_with("&&")) {
         emit(TokenType::and_);
-        pos_ += 2;
+        m_pos += 2;
         continue;
         ;
       }
 
       if (v.starts_with("||")) {
         emit(TokenType::or_);
-        pos_ += 2;
+        m_pos += 2;
         continue;
         ;
       }
 
       if (v.starts_with("true")) {
         emit(TokenType::true_);
-        pos_ += 4;
+        m_pos += 4;
         continue;
         ;
       }
 
       if (v.starts_with("false")) {
         emit(TokenType::false_);
-        pos_ += 5;
+        m_pos += 5;
         continue;
         ;
       }
 
       if (v.starts_with("null")) {
         emit(TokenType::null_);
-        pos_ += 2;
+        m_pos += 2;
         continue;
         ;
       }
 
       // Function call?
-      if (accept(function_name_first)) {
-        accept_run(function_name_char);
+      if (accept(s_function_name_first)) {
+        accept_run(s_function_name_char);
 
         if (peek().value_or(' ') != '(') {
           error("expected a function call");
-          return State::error;
+          return ERROR;
         }
 
-        paren_stack_.push(1);
+        m_paren_stack.push(1);
         emit(TokenType::func_);
         next(); // Discard the left paren.
         ignore();
@@ -386,11 +389,11 @@ State Lexer::lexInsideFilter() {
     }
 
     error(std::format("unexpected filter selection token '{}'", c.value()));
-    return State::error;
+    return ERROR;
   }
 }
 
-State Lexer::lexInsideSingleQuotedString() {
+Lexer::State Lexer::lex_inside_single_quoted_string() {
   ignore(); // Discard the opening quote.
 
   // Empty string?
@@ -398,7 +401,7 @@ State Lexer::lexInsideSingleQuotedString() {
     emit(TokenType::sq_string);
     next(); // Discard the closing quote.
     ignore();
-    return State::lexInsideBracketedSelection;
+    return LEX_INSIDE_BRACKETED_SELECTION;
   }
 
   std::string_view v;
@@ -413,15 +416,16 @@ State Lexer::lexInsideSingleQuotedString() {
       continue;
     }
 
-    if (c.value_or(' ') == '\\' && !(escapes.contains(peek().value_or(' ')))) {
+    if (c.value_or(' ') == '\\' &&
+        !(s_escapes.contains(peek().value_or(' ')))) {
       error(
           std::format("invalid escape sequence '\\{}'", peek().value_or(' ')));
-      return State::error;
+      return ERROR;
     }
 
     if (!c) {
-      error(std::format("unclosed string starting at index {}", start_));
-      return State::error;
+      error(std::format("unclosed string starting at index {}", m_start));
+      return ERROR;
     }
 
     if (c.value_or(' ') == '\'') {
@@ -429,12 +433,12 @@ State Lexer::lexInsideSingleQuotedString() {
       emit(TokenType::sq_string);
       next(); // Discard the closing quote.
       ignore();
-      return State::lexInsideBracketedSelection;
+      return LEX_INSIDE_BRACKETED_SELECTION;
     }
   }
 }
 
-State Lexer::lexInsideDoubleQuotedString() {
+Lexer::State Lexer::lex_inside_double_quoted_string() {
   ignore(); // Discard the opening quote.
 
   // Empty string?
@@ -442,7 +446,7 @@ State Lexer::lexInsideDoubleQuotedString() {
     emit(TokenType::dq_string);
     next(); // Discard the closing quote.
     ignore();
-    return State::lexInsideBracketedSelection;
+    return LEX_INSIDE_BRACKETED_SELECTION;
   }
 
   std::string_view v;
@@ -457,15 +461,16 @@ State Lexer::lexInsideDoubleQuotedString() {
       continue;
     }
 
-    if (c.value_or(' ') == '\\' && !(escapes.contains(peek().value_or(' ')))) {
+    if (c.value_or(' ') == '\\' &&
+        !(s_escapes.contains(peek().value_or(' ')))) {
       error(
           std::format("invalid escape sequence '\\{}'", peek().value_or(' ')));
-      return State::error;
+      return ERROR;
     }
 
     if (!c) {
-      error(std::format("unclosed string starting at index {}", start_));
-      return State::error;
+      error(std::format("unclosed string starting at index {}", m_start));
+      return ERROR;
     }
 
     if (c.value_or(' ') == '"') {
@@ -473,12 +478,12 @@ State Lexer::lexInsideDoubleQuotedString() {
       emit(TokenType::dq_string);
       next(); // Discard the closing quote.
       ignore();
-      return State::lexInsideBracketedSelection;
+      return LEX_INSIDE_BRACKETED_SELECTION;
     }
   }
 }
 
-State Lexer::lexInsideSingleQuotedFilterString() {
+Lexer::State Lexer::lex_inside_single_quoted_filter_string() {
   ignore(); // Discard the opening quote.
 
   // Empty string?
@@ -486,7 +491,7 @@ State Lexer::lexInsideSingleQuotedFilterString() {
     emit(TokenType::sq_string);
     next(); // Discard the closing quote.
     ignore();
-    return State::lexInsideFilter;
+    return LEX_INSIDE_FILTER;
   }
 
   std::string_view v;
@@ -501,15 +506,16 @@ State Lexer::lexInsideSingleQuotedFilterString() {
       continue;
     }
 
-    if (c.value_or(' ') == '\\' && !(escapes.contains(peek().value_or(' ')))) {
+    if (c.value_or(' ') == '\\' &&
+        !(s_escapes.contains(peek().value_or(' ')))) {
       error(
           std::format("invalid escape sequence '\\{}'", peek().value_or(' ')));
-      return State::error;
+      return ERROR;
     }
 
     if (!c) {
-      error(std::format("unclosed string starting at index {}", start_));
-      return State::error;
+      error(std::format("unclosed string starting at index {}", m_start));
+      return ERROR;
     }
 
     if (c.value_or(' ') == '\'') {
@@ -517,12 +523,12 @@ State Lexer::lexInsideSingleQuotedFilterString() {
       emit(TokenType::sq_string);
       next(); // Discard the closing quote.
       ignore();
-      return State::lexInsideFilter;
+      return LEX_INSIDE_FILTER;
     }
   }
 }
 
-State Lexer::lexInsideDoubleQuotedFilterString() {
+Lexer::State Lexer::lex_inside_double_quoted_filter_string() {
   ignore(); // Discard the opening quote.
 
   // Empty string?
@@ -530,7 +536,7 @@ State Lexer::lexInsideDoubleQuotedFilterString() {
     emit(TokenType::dq_string);
     next(); // Discard the closing quote.
     ignore();
-    return State::lexInsideFilter;
+    return LEX_INSIDE_FILTER;
   }
 
   std::string_view v;
@@ -545,15 +551,16 @@ State Lexer::lexInsideDoubleQuotedFilterString() {
       continue;
     }
 
-    if (c.value_or(' ') == '\\' && !(escapes.contains(peek().value_or(' ')))) {
+    if (c.value_or(' ') == '\\' &&
+        !(s_escapes.contains(peek().value_or(' ')))) {
       error(
           std::format("invalid escape sequence '\\{}'", peek().value_or(' ')));
-      return State::error;
+      return ERROR;
     }
 
     if (!c) {
-      error(std::format("unclosed string starting at index {}", start_));
-      return State::error;
+      error(std::format("unclosed string starting at index {}", m_start));
+      return ERROR;
     }
 
     if (c.value_or(' ') == '"') {
@@ -561,51 +568,48 @@ State Lexer::lexInsideDoubleQuotedFilterString() {
       emit(TokenType::dq_string);
       next(); // Discard the closing quote.
       ignore();
-      return State::lexInsideFilter;
+      return LEX_INSIDE_FILTER;
     }
   }
 }
-
-Lexer::Lexer(std::string_view query)
-    : query_{query}, length_{query.length()} {};
 
 void Lexer::run() {
-  auto current_state{State::lexRoot};
+  auto current_state{LEX_ROOT};
 
   while (true) {
     switch (current_state) {
-    case State::error:
-    case State::none:
+    case ERROR:
+    case NONE:
       return;
-    case State::lexRoot:
-      current_state = lexRoot();
+    case LEX_ROOT:
+      current_state = lex_root();
       break;
-    case State::lexSegment:
-      current_state = lexSegment();
+    case LEX_SEGMENT:
+      current_state = lex_segment();
       break;
-    case State::lexDescendantSelection:
-      current_state = lexDescendantSelection();
+    case LEX_DESCENDANT_SELECTION:
+      current_state = lex_descendant_selection();
       break;
-    case State::lexDotSelector:
-      current_state = lexDotSelector();
+    case LEX_DOT_SELECTOR:
+      current_state = lex_dot_selector();
       break;
-    case State::lexInsideBracketedSelection:
-      current_state = lexInsideBracketedSelection();
+    case LEX_INSIDE_BRACKETED_SELECTION:
+      current_state = lex_inside_bracketed_selection();
       break;
-    case State::lexInsideFilter:
-      current_state = lexInsideFilter();
+    case LEX_INSIDE_FILTER:
+      current_state = lex_inside_filter();
       break;
-    case State::lexInsideSingleQuotedString:
-      current_state = lexInsideSingleQuotedString();
+    case LEX_INSIDE_SINGLE_QUOTED_STRING:
+      current_state = lex_inside_single_quoted_string();
       break;
-    case State::lexInsideDoubleQuotedString:
-      current_state = lexInsideDoubleQuotedString();
+    case LEX_INSIDE_DOUBLE_QUOTED_STRING:
+      current_state = lex_inside_double_quoted_string();
       break;
-    case State::lexInsideSingleQuotedFilterString:
-      current_state = lexInsideSingleQuotedFilterString();
+    case LEX_INSIDE_SINGLE_QUOTED_FILTER_STRING:
+      current_state = lex_inside_single_quoted_filter_string();
       break;
-    case State::lexInsideDoubleQuotedFilterString:
-      current_state = lexInsideDoubleQuotedFilterString();
+    case LEX_INSIDE_DOUBLE_QUOTED_FILTER_STRING:
+      current_state = lex_inside_double_quoted_filter_string();
       break;
     default:
       error("unknown lexer state {}");
@@ -616,31 +620,31 @@ void Lexer::run() {
 
 void Lexer::emit(TokenType t) {
   std::string_view view{query_};
-  view.remove_prefix(start_);
-  view.remove_suffix(length_ - pos_);
-  tokens_.push_back(Token{t, view, start_});
-  start_ = pos_;
+  view.remove_prefix(m_start);
+  view.remove_suffix(m_length - m_pos);
+  m_tokens.push_back(Token{t, view, m_start});
+  m_start = m_pos;
 };
 
 std::optional<char> Lexer::next() {
-  if (pos_ >= length_) {
+  if (m_pos >= m_length) {
     return std::nullopt;
   }
 
-  return std::optional<char>(std::in_place, query_[pos_++]);
+  return std::optional<char>(std::in_place, query_[m_pos++]);
 };
 
 std::string_view Lexer::view() const {
   std::string_view view_{query_};
-  view_.remove_prefix(pos_);
+  view_.remove_prefix(m_pos);
   return view_;
 }
 
-void Lexer::ignore() { start_ = pos_; }
+void Lexer::ignore() { m_start = m_pos; }
 
 void Lexer::backup() {
-  assert(pos_ > start_ && "can't backup beyond start");
-  --pos_;
+  assert(m_pos > m_start && "can't backup beyond start");
+  --m_pos;
 }
 
 std::optional<char> Lexer::peek() {
@@ -691,18 +695,18 @@ bool Lexer::accept_run(const std::unordered_set<char>& valid) {
 }
 
 bool Lexer::accept_name() {
-  assert(pos_ == start_ && "must emit or ignore before consuming whitespace");
+  assert(m_pos == m_start && "must emit or ignore before consuming whitespace");
   std::optional<char> c = next();
 
   // XXX: Just ASCII for now.
-  if (c && name_first.contains(c.value())) {
+  if (c && s_name_first.contains(c.value())) {
     c = next();
   } else if (c) {
     backup();
     return false;
   }
 
-  while (c && name_char.contains(c.value())) {
+  while (c && s_name_char.contains(c.value())) {
     c = next();
   }
 
@@ -715,7 +719,7 @@ bool Lexer::accept_name() {
 
 bool Lexer::ignore_whitespace() {
 
-  if (accept_run(Lexer::whitespace)) {
+  if (accept_run(Lexer::s_whitespace)) {
     ignore();
     return true;
   }
@@ -723,8 +727,8 @@ bool Lexer::ignore_whitespace() {
 }
 
 void Lexer::error(std::string_view message) {
-  error_ = message;
-  tokens_.push_back(Token{TokenType::error, error_, pos_});
+  m_error = message;
+  m_tokens.push_back(Token{TokenType::error, m_error, m_pos});
 }
 
 } // namespace libjsonpath
