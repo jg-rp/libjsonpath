@@ -14,16 +14,29 @@ protected:
     libjsonpath::Lexer lexer{query};
     EXPECT_EQ(lexer.query_, query);
     EXPECT_EQ(lexer.tokens().size(), 0);
+
     lexer.run();
+    auto tokens{lexer.tokens()};
 
-    ASSERT_EQ(std::size(lexer.tokens()), std::size(want));
+    EXPECT_EQ(std::size(lexer.tokens()), std::size(want));
 
-    auto mismatch{std::mismatch(
-        lexer.tokens().cbegin(), lexer.tokens().cend(), want.cbegin())};
+    if (std::size(tokens) < std::size(want)) {
+      auto mismatch{std::mismatch(want.cbegin(), want.cend(), tokens.cbegin())};
 
-    if (std::get<0>(mismatch) != lexer.tokens().cend()) {
-      FAIL() << "expected " << *std::get<1>(mismatch) << ", found "
-             << *std::get<0>(mismatch);
+      if (std::get<0>(mismatch) != want.cend()) {
+        FAIL() << query << std::endl
+               << "expected: " << *std::get<0>(mismatch) << std::endl
+               << "found:    " << *std::get<1>(mismatch);
+      }
+    } else {
+      auto mismatch{
+          std::mismatch(tokens.cbegin(), tokens.cend(), want.cbegin())};
+
+      if (std::get<0>(mismatch) != tokens.cend()) {
+        FAIL() << query << std::endl
+               << "expected: " << *std::get<1>(mismatch) << std::endl
+               << "found:    " << *std::get<0>(mismatch);
+      }
     }
   }
 };

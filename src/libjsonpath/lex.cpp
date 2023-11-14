@@ -206,8 +206,8 @@ Lexer::State Lexer::lex_inside_filter() {
         int paren_count{m_paren_stack.top()};
         m_paren_stack.pop();
         m_paren_stack.push(paren_count + 1);
-        continue;
       }
+      continue;
     case ')':
       emit(TokenType::rparen);
       // Are we closing a function call or a parenthesized expression?
@@ -217,7 +217,7 @@ Lexer::State Lexer::lex_inside_filter() {
         } else {
           int paren_count{m_paren_stack.top()};
           m_paren_stack.pop();
-          m_paren_stack.push(paren_count + 1);
+          m_paren_stack.push(paren_count - 1);
         }
       }
       continue;
@@ -242,6 +242,7 @@ Lexer::State Lexer::lex_inside_filter() {
       if (peek().value_or(' ') == '=') {
         next();
         emit(TokenType::eq);
+        continue;
       } else {
         backup();
         error("unexpected filter selector token '='");

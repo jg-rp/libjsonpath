@@ -2,7 +2,7 @@
 #include <iostream>
 
 int main(int, char**) {
-  libjsonpath::Lexer lexer{"$.foo.bar[1]"};
+  libjsonpath::Lexer lexer{"$[?true==false]"};
   lexer.run();
 
   for (const auto& token : lexer.tokens()) {
