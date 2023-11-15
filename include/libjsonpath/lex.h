@@ -11,16 +11,10 @@
 
 namespace libjsonpath {
 
-// TODO: settle on a naming convention
-
 class Lexer {
 public:
   Lexer(std::string_view query);
-  // TODO: copy constructor
-  // TODO: move constructor
-  // TODO: assignment constructor
-
-  const std::string_view query_;
+  const std::string_view query;
 
   // Start the state machine.
   void run();
@@ -126,7 +120,7 @@ private:
   bool accept_run(const std::unordered_set<char>& valid);
   bool accept_name(); // Advance the lexer until we find a non-name char.
 
-  // Return a string view starting from the current position.
+  // Return a string view of _query_ starting from the current position.
   std::string_view view() const;
 
   void backup();            // Go back one character, if _pos_ > _start_.
@@ -144,8 +138,8 @@ private:
   State lex_inside_bracketed_selection();
   State lex_inside_filter();
 
-  // Tokenize a string literal surrounded by _quote_, emitting a _token_type_
-  // token type and returning _next_state_.
+  // Scan for a string literal surrounded by _quote_, emitting a
+  // _token_type_ token type and returning _next_state_.
   template <State next_state, char quote, TokenType tt>
   State lex_inside_string() {
     ignore(); // Discard the opening quote.

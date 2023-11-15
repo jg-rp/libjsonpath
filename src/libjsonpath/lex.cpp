@@ -6,7 +6,7 @@
 namespace libjsonpath {
 
 Lexer::Lexer(std::string_view query)
-    : query_{query}, m_length{query.length()} {};
+    : query{query}, m_length{query.length()} {};
 
 Lexer::State Lexer::lex_root() {
   const auto c{next()};
@@ -446,7 +446,7 @@ void Lexer::run() {
 };
 
 void Lexer::emit(TokenType t) {
-  std::string_view view{query_};
+  std::string_view view{query};
   view.remove_prefix(m_start);
   view.remove_suffix(m_length - m_pos);
   m_tokens.push_back(Token{t, view, m_start});
@@ -458,11 +458,11 @@ std::optional<char> Lexer::next() {
     return std::nullopt;
   }
 
-  return std::optional<char>(std::in_place, query_[m_pos++]);
+  return std::optional<char>(std::in_place, query[m_pos++]);
 };
 
 std::string_view Lexer::view() const {
-  std::string_view view_{query_};
+  std::string_view view_{query};
   view_.remove_prefix(m_pos);
   return view_;
 }
