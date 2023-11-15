@@ -432,3 +432,5 @@ TEST_F(LexerTest, FloatLiteral) {
                                         {tt::eof_, "", 16},
                                     });
 }
+
+// TODO: test escape sequences inside string literals

@@ -3,6 +3,7 @@
 
 #include "libjsonpath/tokens.h"
 #include <deque>
+#include <format>
 #include <optional>
 #include <stack>
 #include <string>
@@ -132,18 +133,65 @@ private:
   void ignore();            // Consume characters between _start_ and _pos_.
   bool ignore_whitespace(); // Consume whitespace characters from _start_.
 
-  void error(std::string_view message);
+  void error(std::string_view message); // Emit an error token.
 
+  // Lexer state functions, each of which emit tokens and return the next
+  // state.
   State lex_root();
   State lex_segment();
   State lex_descendant_selection();
   State lex_dot_selector();
   State lex_inside_bracketed_selection();
   State lex_inside_filter();
-  State lex_inside_single_quoted_string();
-  State lex_inside_double_quoted_string();
-  State lex_inside_single_quoted_filter_string();
-  State lex_inside_double_quoted_filter_string();
+
+  // Tokenize a string literal surrounded by _quote_, emitting a _token_type_
+  // token type and returning _next_state_.
+  template <State next_state, char quote, TokenType tt>
+  State lex_inside_string() {
+    ignore(); // Discard the opening quote.
+
+    // Empty string?
+    if (peek().value_or(' ') == quote) {
+      emit(tt);
+      next(); // Discard the closing quote.
+      ignore();
+      return next_state;
+    }
+
+    std::string_view v;
+    std::optional<char> c;
+    const std::string escaped_quote{'\\', quote};
+
+    while (true) {
+      v = view();
+      c = next();
+
+      if (v.starts_with("\\\\") || v.starts_with(escaped_quote)) {
+        next();
+        continue;
+      }
+
+      if (c.value_or(' ') == '\\' &&
+          !(s_escapes.contains(peek().value_or(' ')))) {
+        error(std::format(
+            "invalid escape sequence '\\{}'", peek().value_or(' ')));
+        return ERROR;
+      }
+
+      if (!c) {
+        error(std::format("unclosed string starting at index {}", m_start));
+        return ERROR;
+      }
+
+      if (c.value_or(' ') == quote) {
+        backup();
+        emit(tt);
+        next(); // Discard the closing quote.
+        ignore();
+        return next_state;
+      }
+    }
+  }
 };
 
 } // namespace libjsonpath

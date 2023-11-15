@@ -396,186 +396,6 @@ Lexer::State Lexer::lex_inside_filter() {
   }
 }
 
-Lexer::State Lexer::lex_inside_single_quoted_string() {
-  ignore(); // Discard the opening quote.
-
-  // Empty string?
-  if (peek().value_or(' ') == '\'') {
-    emit(TokenType::sq_string);
-    next(); // Discard the closing quote.
-    ignore();
-    return LEX_INSIDE_BRACKETED_SELECTION;
-  }
-
-  std::string_view v;
-  std::optional<char> c;
-
-  while (true) {
-    v = view();
-    c = next();
-
-    if (v.starts_with("\\\\") || v.starts_with("\\\'")) {
-      next();
-      continue;
-    }
-
-    if (c.value_or(' ') == '\\' &&
-        !(s_escapes.contains(peek().value_or(' ')))) {
-      error(
-          std::format("invalid escape sequence '\\{}'", peek().value_or(' ')));
-      return ERROR;
-    }
-
-    if (!c) {
-      error(std::format("unclosed string starting at index {}", m_start));
-      return ERROR;
-    }
-
-    if (c.value_or(' ') == '\'') {
-      backup();
-      emit(TokenType::sq_string);
-      next(); // Discard the closing quote.
-      ignore();
-      return LEX_INSIDE_BRACKETED_SELECTION;
-    }
-  }
-}
-
-Lexer::State Lexer::lex_inside_double_quoted_string() {
-  ignore(); // Discard the opening quote.
-
-  // Empty string?
-  if (peek().value_or(' ') == '"') {
-    emit(TokenType::dq_string);
-    next(); // Discard the closing quote.
-    ignore();
-    return LEX_INSIDE_BRACKETED_SELECTION;
-  }
-
-  std::string_view v;
-  std::optional<char> c;
-
-  while (true) {
-    v = view();
-    c = next();
-
-    if (v.starts_with("\\\\") || v.starts_with("\\\"")) {
-      next();
-      continue;
-    }
-
-    if (c.value_or(' ') == '\\' &&
-        !(s_escapes.contains(peek().value_or(' ')))) {
-      error(
-          std::format("invalid escape sequence '\\{}'", peek().value_or(' ')));
-      return ERROR;
-    }
-
-    if (!c) {
-      error(std::format("unclosed string starting at index {}", m_start));
-      return ERROR;
-    }
-
-    if (c.value_or(' ') == '"') {
-      backup();
-      emit(TokenType::dq_string);
-      next(); // Discard the closing quote.
-      ignore();
-      return LEX_INSIDE_BRACKETED_SELECTION;
-    }
-  }
-}
-
-Lexer::State Lexer::lex_inside_single_quoted_filter_string() {
-  ignore(); // Discard the opening quote.
-
-  // Empty string?
-  if (peek().value_or(' ') == '\'') {
-    emit(TokenType::sq_string);
-    next(); // Discard the closing quote.
-    ignore();
-    return LEX_INSIDE_FILTER;
-  }
-
-  std::string_view v;
-  std::optional<char> c;
-
-  while (true) {
-    v = view();
-    c = next();
-
-    if (v.starts_with("\\\\") || v.starts_with("\\\'")) {
-      next();
-      continue;
-    }
-
-    if (c.value_or(' ') == '\\' &&
-        !(s_escapes.contains(peek().value_or(' ')))) {
-      error(
-          std::format("invalid escape sequence '\\{}'", peek().value_or(' ')));
-      return ERROR;
-    }
-
-    if (!c) {
-      error(std::format("unclosed string starting at index {}", m_start));
-      return ERROR;
-    }
-
-    if (c.value_or(' ') == '\'') {
-      backup();
-      emit(TokenType::sq_string);
-      next(); // Discard the closing quote.
-      ignore();
-      return LEX_INSIDE_FILTER;
-    }
-  }
-}
-
-Lexer::State Lexer::lex_inside_double_quoted_filter_string() {
-  ignore(); // Discard the opening quote.
-
-  // Empty string?
-  if (peek().value_or(' ') == '"') {
-    emit(TokenType::dq_string);
-    next(); // Discard the closing quote.
-    ignore();
-    return LEX_INSIDE_FILTER;
-  }
-
-  std::string_view v;
-  std::optional<char> c;
-
-  while (true) {
-    v = view();
-    c = next();
-
-    if (v.starts_with("\\\\") || v.starts_with("\\\"")) {
-      next();
-      continue;
-    }
-
-    if (c.value_or(' ') == '\\' &&
-        !(s_escapes.contains(peek().value_or(' ')))) {
-      error(
-          std::format("invalid escape sequence '\\{}'", peek().value_or(' ')));
-      return ERROR;
-    }
-
-    if (!c) {
-      error(std::format("unclosed string starting at index {}", m_start));
-      return ERROR;
-    }
-
-    if (c.value_or(' ') == '"') {
-      backup();
-      emit(TokenType::dq_string);
-      next(); // Discard the closing quote.
-      ignore();
-      return LEX_INSIDE_FILTER;
-    }
-  }
-}
-
 void Lexer::run() {
   auto current_state{LEX_ROOT};
 
@@ -603,16 +423,20 @@ void Lexer::run() {
       current_state = lex_inside_filter();
       break;
     case LEX_INSIDE_SINGLE_QUOTED_STRING:
-      current_state = lex_inside_single_quoted_string();
+      current_state = lex_inside_string<LEX_INSIDE_BRACKETED_SELECTION, '\'',
+          TokenType::sq_string>();
       break;
     case LEX_INSIDE_DOUBLE_QUOTED_STRING:
-      current_state = lex_inside_double_quoted_string();
+      current_state = lex_inside_string<LEX_INSIDE_BRACKETED_SELECTION, '"',
+          TokenType::dq_string>();
       break;
     case LEX_INSIDE_SINGLE_QUOTED_FILTER_STRING:
-      current_state = lex_inside_single_quoted_filter_string();
+      current_state =
+          lex_inside_string<LEX_INSIDE_FILTER, '\'', TokenType::sq_string>();
       break;
     case LEX_INSIDE_DOUBLE_QUOTED_FILTER_STRING:
-      current_state = lex_inside_double_quoted_filter_string();
+      current_state =
+          lex_inside_string<LEX_INSIDE_FILTER, '"', TokenType::dq_string>();
       break;
     default:
       error("unknown lexer state {}");
