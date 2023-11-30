@@ -6,13 +6,13 @@
 
 namespace libjsonpath {
 enum class TokenType {
+  eof_,      // EOF
   and_,      // &&
   colon,     // :
   comma,     // ,
   current,   // @
   ddot,      // ..
   dq_string, // DQ_STRING
-  eof_,      // EOF
   eq,        // ==
   error,     // ERROR
   false_,    // false

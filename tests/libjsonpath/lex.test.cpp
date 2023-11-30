@@ -1,9 +1,9 @@
-#include "libjsonpath/lex.h"
-#include "libjsonpath/tokens.h"
-#include <algorithm>
-#include <gtest/gtest.h>
-#include <string>
-#include <vector>
+#include "libjsonpath/lex.hpp"    // Lexer
+#include "libjsonpath/tokens.hpp" // Token
+#include <algorithm>              // mismatch
+#include <gtest/gtest.h>          // EXPEXT_* TEST_F testing::Test
+#include <string>                 // string_view
+#include <vector>                 // vector
 
 using tt = libjsonpath::TokenType;
 
@@ -404,6 +404,20 @@ TEST_F(LexerTest, BooleanLiterals) {
                                        {tt::rbracket, "]", 14},
                                        {tt::eof_, "", 15},
                                    });
+}
+
+TEST_F(LexerTest, NullLiteral) {
+  expect_tokens("$[?@.foo == null]", {
+                                         {tt::root, "$", 0},
+                                         {tt::lbracket, "[", 1},
+                                         {tt::filter, "?", 2},
+                                         {tt::current, "@", 3},
+                                         {tt::name, "foo", 5},
+                                         {tt::eq, "==", 9},
+                                         {tt::null_, "null", 12},
+                                         {tt::rbracket, "]", 16},
+                                         {tt::eof_, "", 17},
+                                     });
 }
 
 TEST_F(LexerTest, LogicalAnd) {

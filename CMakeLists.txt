@@ -17,7 +17,14 @@ else()
     add_compile_options(-Wall -Wextra -Wpedantic -Wshadow -Wnon-virtual-dtor)
 endif()
 
-add_executable(libjsonpath dev.cpp src/libjsonpath/lex.cpp src/libjsonpath/tokens.cpp)
+add_executable(libjsonpath
+  dev.cpp
+  src/libjsonpath/lex.cpp
+  src/libjsonpath/tokens.cpp
+  src/libjsonpath/parse.cpp
+  src/libjsonpath/jsonpath.cpp
+)
+
 target_include_directories(libjsonpath PUBLIC 
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>  
@@ -34,6 +41,7 @@ set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 enable_testing()
 
+# Lexer tests
 add_executable(
   lexer_tests
   tests/libjsonpath/lex.test.cpp
@@ -47,6 +55,26 @@ target_include_directories(lexer_tests PUBLIC
 
 target_link_libraries(
   lexer_tests
+  GTest::gtest_main
+)
+
+# Parser tests
+add_executable(
+  parser_tests
+  tests/libjsonpath/parse.test.cpp
+  src/libjsonpath/jsonpath.cpp
+  src/libjsonpath/tokens.cpp
+  src/libjsonpath/lex.cpp
+  src/libjsonpath/parse.cpp
+)
+
+target_include_directories(parser_tests PUBLIC 
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>  
+)
+
+target_link_libraries(
+  parser_tests
   GTest::gtest_main
 )
 

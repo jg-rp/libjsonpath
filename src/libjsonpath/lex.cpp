@@ -1,4 +1,4 @@
-#include "libjsonpath/lex.h"
+#include "libjsonpath/lex.hpp"
 #include <cassert>
 #include <format>
 #include <iostream>
@@ -369,7 +369,7 @@ Lexer::State Lexer::lex_inside_filter() {
       }
 
       if (v.starts_with("null")) {
-        m_pos += 2;
+        m_pos += 4;
         emit(TokenType::null_);
         continue;
       }

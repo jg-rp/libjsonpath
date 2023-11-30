@@ -1,7 +1,7 @@
 #ifndef LIBJSONPATH_LEX_H_
 #define LIBJSONPATH_LEX_H_
 
-#include "libjsonpath/tokens.h"
+#include "libjsonpath/tokens.hpp"
 #include <deque>
 #include <format>
 #include <optional>

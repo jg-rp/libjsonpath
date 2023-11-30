@@ -1,4 +1,4 @@
-#include "libjsonpath/tokens.h"
+#include "libjsonpath/tokens.hpp"
 
 namespace libjsonpath {
 std::ostream& operator<<(std::ostream& os, TokenType const& token_type) {
