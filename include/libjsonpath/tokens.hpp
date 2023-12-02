@@ -43,9 +43,10 @@ enum class TokenType {
 std::ostream& operator<<(std::ostream& os, TokenType const& token_type);
 
 struct Token {
-  TokenType type;
-  std::string_view value;
-  std::string::size_type index;
+  TokenType type{};
+  std::string_view value{};
+  std::string::size_type index{};
+  std::string_view query{};
 };
 
 bool operator==(const Token& lhs, const Token& rhs);

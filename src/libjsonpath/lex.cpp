@@ -1,7 +1,6 @@
 #include "libjsonpath/lex.hpp"
 #include <cassert>
-#include <format>
-#include <iostream>
+#include <format> // std::format
 
 namespace libjsonpath {
 
@@ -17,7 +16,7 @@ Lexer::State Lexer::lex_root() {
   }
   emit(TokenType::root);
   return LEX_SEGMENT;
-};
+}
 
 Lexer::State Lexer::lex_segment() {
   if (ignore_whitespace() && !(peek())) {
@@ -100,7 +99,7 @@ Lexer::State Lexer::lex_dot_selector() {
     emit(TokenType::name);
     return LEX_SEGMENT;
   } else {
-    error("unexpected shorthand selection");
+    error(std::format("unexpected shorthand selector '{}'", c.value()));
     return ERROR;
   }
 }
@@ -449,7 +448,7 @@ void Lexer::emit(TokenType t) {
   std::string_view view{query};
   view.remove_prefix(m_start);
   view.remove_suffix(m_length - m_pos);
-  m_tokens.push_back(Token{t, view, m_start});
+  m_tokens.push_back(Token{t, view, m_start, query});
   m_start = m_pos;
 };
 
@@ -470,6 +469,7 @@ std::string_view Lexer::view() const {
 void Lexer::ignore() { m_start = m_pos; }
 
 void Lexer::backup() {
+  // TODO:
   // assert(m_pos > m_start && "can't backup beyond start");
   if (m_pos > m_start) {
     --m_pos;
@@ -524,9 +524,11 @@ bool Lexer::accept_run(const std::unordered_set<char>& valid) {
 }
 
 bool Lexer::accept_name() {
+  // TODO: exception?
   assert(m_pos == m_start && "must emit or ignore before consuming whitespace");
   std::optional<char> c = next();
 
+  // TODO:
   // XXX: Just ASCII for now.
   if (c && s_name_first.contains(c.value())) {
     c = next();
@@ -557,7 +559,7 @@ bool Lexer::ignore_whitespace() {
 
 void Lexer::error(std::string_view message) {
   m_error = message;
-  m_tokens.push_back(Token{TokenType::error, m_error, m_pos});
+  m_tokens.push_back(Token{TokenType::error, m_error, m_pos, query});
 }
 
 } // namespace libjsonpath

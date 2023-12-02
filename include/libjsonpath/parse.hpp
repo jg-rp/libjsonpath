@@ -3,11 +3,12 @@
 
 #include "libjsonpath/selectors.hpp"
 #include "libjsonpath/tokens.hpp"
-#include <deque>
-#include <memory>
-#include <string>
-#include <unordered_map>
-#include <unordered_set>
+#include <deque>         // std::deque
+#include <memory>        // std::unique_ptr std::make_unique
+#include <string>        // std::string
+#include <string_view>   // std::string_view
+#include <unordered_map> // std::unordered_map
+#include <unordered_set> // std::unordered_set
 
 namespace libjsonpath {
 

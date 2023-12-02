@@ -1,17 +1,23 @@
 #include "libjsonpath/jsonpath.hpp"
-#include "libjsonpath/lex.hpp"   // Lexer
-#include "libjsonpath/parse.hpp" // Parser
-#include <format>                // format
-#include <string>                // string
-#include <variant>               // visit
+#include "libjsonpath/exceptions.hpp" // libjsonpath::SyntaxError
+#include "libjsonpath/lex.hpp"        // libjsonpath::Lexer
+#include "libjsonpath/parse.hpp"      // libjsonpath::Parser
+#include "libjsonpath/tokens.hpp"     // libjsonpath::TokenType
+#include <format>                     // std::format
+#include <string>                     // std::string
+#include <variant>                    // std::visit
 
 namespace libjsonpath {
 
 segments_t parse(std::string_view s) {
   Lexer lexer{s};
   lexer.run();
+  auto tokens{lexer.tokens()};
+  if (tokens.size() && tokens.back().type == TokenType::error) {
+    throw SyntaxError(tokens.back().value, tokens.back());
+  }
   Parser parser{};
-  return parser.parse(lexer.tokens());
+  return parser.parse(tokens);
 }
 
 std::string to_string(const segments_t& path) {

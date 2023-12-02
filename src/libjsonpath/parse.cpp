@@ -1,16 +1,16 @@
 #include "libjsonpath/parse.hpp"
+#include "libjsonpath/exceptions.hpp"
 #include <cassert>
-#include <charconv> // from_chars
-#include <format>
-#include <iterator>
-#include <system_error>
-#include <utility>
-#include <variant>
+#include <charconv>     // std::from_chars
+#include <cstdlib>      // std::strtod
+#include <format>       // std::format
+#include <system_error> // std::errc
+#include <utility>      // std::move
+#include <variant>      // std::holds_alternative
 
 namespace libjsonpath {
 
 segments_t Parser::parse(const Tokens& tokens) const {
-  // TODO: check for error token
   TokenIterator it = tokens.cbegin();
 
   if (it->type == TokenType::root) {
@@ -20,7 +20,8 @@ segments_t Parser::parse(const Tokens& tokens) const {
   auto segments{parse_path(it, false)};
 
   if (it->type != TokenType::eof_) {
-    // TODO: throw exception
+    throw SyntaxError(
+        std::format("expected end of query, found '{}'", it->value), *it);
   }
 
   return segments;
@@ -68,6 +69,8 @@ segment_t Parser::parse_segment(TokenIterator& tokens) const {
   case TokenType::ddot:
     tokens++;
     recursive_segment = parse_segment(tokens);
+    // A missing selection after a recursive descent segment should
+    // have been caught by the lexer.
     assert(std::holds_alternative<Segment>(recursive_segment) &&
            "unexpected recursive segment");
     return Segment{
@@ -113,11 +116,12 @@ std::vector<selector_t> Parser::parse_bracketed_selection(
       items.push_back(WildSelector{current, false});
       break;
     case TokenType::eof_:
-      // TODO: raise an exception
-      assert(false && "unexpected end of query");
+      throw SyntaxError("unexpected end of query", current);
     default:
-      // TODO: raise an exception
-      assert(false && "unexpected token in bracketed selection");
+      throw SyntaxError(
+          std::format(
+              "unexpected token in bracketed selection '{}'", current.value),
+          current);
     }
 
     if (std::next(tokens)->type != TokenType::rbracket) {

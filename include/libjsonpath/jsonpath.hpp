@@ -3,6 +3,7 @@
 
 #include "libjsonpath/selectors.hpp"
 #include <string>
+#include <string_view>
 
 namespace libjsonpath {
 

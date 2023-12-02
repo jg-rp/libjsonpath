@@ -45,7 +45,8 @@ enable_testing()
 add_executable(
   lexer_tests
   tests/libjsonpath/lex.test.cpp
-  src/libjsonpath/lex.cpp src/libjsonpath/tokens.cpp
+  src/libjsonpath/lex.cpp
+  src/libjsonpath/tokens.cpp
 )
 
 target_include_directories(lexer_tests PUBLIC 
@@ -78,8 +79,28 @@ target_link_libraries(
   GTest::gtest_main
 )
 
+# Error tests
+add_executable(
+  error_tests
+  tests/libjsonpath/errors.test.cpp
+  src/libjsonpath/jsonpath.cpp
+  src/libjsonpath/tokens.cpp
+  src/libjsonpath/lex.cpp
+  src/libjsonpath/parse.cpp
+)
+
+target_include_directories(error_tests PUBLIC 
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>  
+)
+
+target_link_libraries(
+  error_tests
+  GTest::gtest_main
+)
+
 include(GoogleTest)
-gtest_discover_tests(lexer_tests)
+gtest_discover_tests(lexer_tests parser_tests error_tests)
 
 # set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 # set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})

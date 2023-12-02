@@ -1,6 +1,6 @@
-#include "libjsonpath/jsonpath.hpp" // path_to_string
+#include "libjsonpath/jsonpath.hpp" // libjsonpath::parse libjsonpath::path_to_string
 #include <gtest/gtest.h>            // EXPEXT_* TEST_F testing::Test
-#include <string>                   // string_view
+#include <string_view>              // string_view
 
 class ParserTest : public testing::Test {
 protected:

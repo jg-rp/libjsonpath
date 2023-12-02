@@ -1,6 +1,9 @@
 #include "libjsonpath/tokens.hpp"
 
 namespace libjsonpath {
+// TODO: lose the symbols, just use names
+// TODO: expose a token_to_string function
+// TODO: formatter specialization
 std::ostream& operator<<(std::ostream& os, TokenType const& token_type) {
   switch (token_type) {
   case TokenType::float_:
@@ -73,7 +76,7 @@ std::ostream& operator<<(std::ostream& os, TokenType const& token_type) {
 
 bool operator==(const Token& lhs, const Token& rhs) {
   return lhs.type == rhs.type && lhs.value == rhs.value &&
-         lhs.index == rhs.index;
+         lhs.index == rhs.index && lhs.query == rhs.query;
 }
 
 std::ostream& operator<<(std::ostream& os, Token const& token) {
