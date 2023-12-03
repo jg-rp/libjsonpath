@@ -23,6 +23,7 @@ add_executable(libjsonpath
   src/libjsonpath/tokens.cpp
   src/libjsonpath/parse.cpp
   src/libjsonpath/jsonpath.cpp
+  src/libjsonpath/utils.cpp
 )
 
 target_include_directories(libjsonpath PUBLIC 
@@ -47,6 +48,7 @@ add_executable(
   tests/libjsonpath/lex.test.cpp
   src/libjsonpath/lex.cpp
   src/libjsonpath/tokens.cpp
+  src/libjsonpath/utils.cpp
 )
 
 target_include_directories(lexer_tests PUBLIC 
@@ -67,7 +69,9 @@ add_executable(
   src/libjsonpath/tokens.cpp
   src/libjsonpath/lex.cpp
   src/libjsonpath/parse.cpp
+  src/libjsonpath/utils.cpp
 )
+
 
 target_include_directories(parser_tests PUBLIC 
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -87,6 +91,7 @@ add_executable(
   src/libjsonpath/tokens.cpp
   src/libjsonpath/lex.cpp
   src/libjsonpath/parse.cpp
+  src/libjsonpath/utils.cpp
 )
 
 target_include_directories(error_tests PUBLIC 

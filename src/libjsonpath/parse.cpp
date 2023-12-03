@@ -1,12 +1,13 @@
 #include "libjsonpath/parse.hpp"
 #include "libjsonpath/exceptions.hpp"
+#include "libjsonpath/utils.hpp" // libjsonpath::singular_query
 #include <cassert>
 #include <charconv>     // std::from_chars
 #include <cstdlib>      // std::strtod
 #include <format>       // std::format
 #include <system_error> // std::errc
 #include <utility>      // std::move
-#include <variant>      // std::holds_alternative
+#include <variant>      // std::holds_alternative std::get
 
 namespace libjsonpath {
 
@@ -87,6 +88,7 @@ segment_t Parser::parse_segment(TokenIterator& tokens) const {
 std::vector<selector_t> Parser::parse_bracketed_selection(
     TokenIterator& tokens) const {
   std::vector<selector_t> items{};
+  auto segment_token{*tokens};
   tokens++; // move past left bracket
   auto current{*tokens};
   Token filter_token;
@@ -134,8 +136,7 @@ std::vector<selector_t> Parser::parse_bracketed_selection(
   }
 
   if (!items.size()) {
-    // TODO: raise an exception
-    assert(false && "empty bracketed segment");
+    throw SyntaxError("empty bracketed segment", segment_token);
   }
 
   return items;
@@ -217,16 +218,19 @@ std::unique_ptr<LogicalNotExpression> Parser::parse_logical_not(
 
 std::unique_ptr<InfixExpression> Parser::parse_infix(
     TokenIterator& tokens, expression_t left) const {
-  const auto token{*tokens};
-  const auto precedence{get_precedence(token.type)};
-  const auto op{get_binary_operator(token.type)};
+  auto token{*tokens};
   tokens++;
-  // TODO: throw for non-singular query?
+  auto right{parse_filter_expression(tokens, get_precedence(token.type))};
+
+  // XXX: should this only be for expression with comparison operators?
+  throw_for_non_singular_query(left);
+  throw_for_non_singular_query(right);
+
   return std::make_unique<InfixExpression>(InfixExpression{
       token,
-      std::move(left), // pointer to left-hand expression
-      op,              // binary operator
-      parse_filter_expression(tokens, precedence),
+      std::move(left),                 // pointer to left-hand expression
+      get_binary_operator(token.type), // binary operator
+      std::move(right),
   });
 };
 
@@ -403,6 +407,24 @@ std::string Parser::decode_string_token(const Token& t) const {
 
   // TODO: replace UTF-16 escape sequences with unicode chars
   return s;
+}
+
+void Parser::throw_for_non_singular_query(const expression_t& expr) const {
+  if (std::holds_alternative<std::unique_ptr<RootQuery>>(expr)) {
+    const auto& root_query{std::get<std::unique_ptr<RootQuery>>(expr)};
+    if (!singular_query(root_query->query)) {
+      throw SyntaxError(
+          "non-singular query is not comparable", root_query->token);
+    }
+  }
+
+  if (std::holds_alternative<std::unique_ptr<RelativeQuery>>(expr)) {
+    auto& relative_query{std::get<std::unique_ptr<RelativeQuery>>(expr)};
+    if (!singular_query(relative_query->query)) {
+      throw SyntaxError(
+          "non-singular query is not comparable", relative_query->token);
+    }
+  }
 }
 
 std::int64_t Parser::svtoi(std::string_view sv) const {

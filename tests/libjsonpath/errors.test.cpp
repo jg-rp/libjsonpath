@@ -31,3 +31,8 @@ TEST_F(ErrorTest, ShorthandSymbol) {
 TEST_F(ErrorTest, EmptyBracketedSegment) {
   expect_syntax_error("$.foo[]", "empty bracketed segment ('$.foo[]':5)");
 }
+
+TEST_F(ErrorTest, NonSingularQueryInComparison) {
+  expect_syntax_error(
+      "$[?@[*]==0]", "non-singular query is not comparable ('$[?@[*]==0]':3)");
+}

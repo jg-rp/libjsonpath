@@ -117,6 +117,9 @@ protected:
   // output as a double quoted string.
   std::string decode_string_token(const Token& t) const;
 
+  // Throw a SyntaxError if _expr_ is not a singular query.
+  void throw_for_non_singular_query(const expression_t& expr) const;
+
 private:
   // Convert a string view to an integer. It is assumed that the view is
   // composed of digits with the possibility of a leading minus sign, as
