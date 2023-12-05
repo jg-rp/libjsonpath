@@ -91,18 +91,6 @@ private:
       'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u',
       'v', 'w', 'x', 'y', 'z'};
 
-  static inline const std::unordered_set<char> s_name_first{'A', 'B', 'C', 'D',
-      'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S',
-      'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '_', 'a', 'b', 'c', 'd', 'e', 'f', 'g',
-      'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v',
-      'w', 'x', 'y', 'z'};
-
-  static inline const std::unordered_set<char> s_name_char{'0', '1', '2', '3',
-      '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I',
-      'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X',
-      'Y', 'Z', '_', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l',
-      'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'};
-
   // Return the next character from the query string, wrapped in an
   // optional object, and advance the current position. If the optional
   // object is empty, we have reached the end of the query string.
@@ -120,7 +108,20 @@ private:
   bool accept(const char ch);
   bool accept(const std::unordered_set<char>& valid);
   bool accept_run(const std::unordered_set<char>& valid);
-  bool accept_name(); // Advance the lexer until we find a non-name char.
+
+  // Advance the lexer if the next run of characters is a valid name.
+  bool accept_name();
+
+  // Advance the lexer if the next character is valid for the first character
+  // in a JSONPath name.
+  bool accept_name_first();
+
+  // Advance the lexer if the next character is valid for a JSONPath name.
+  bool accept_name_char();
+
+  // Advance the lexer if the next character is a valid UTF-8 continuation
+  // byte, or throw a LexerError if it's not.
+  void accept_continuation_byte();
 
   // Return a string view of _query_ starting from the current position.
   std::string_view view() const;

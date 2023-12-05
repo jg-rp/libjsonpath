@@ -467,4 +467,12 @@ TEST_F(LexerTest, FloatLiteral) {
                           });
 }
 
+TEST_F(LexerTest, NameWithMultiByteChar) {
+  expect_tokens("$.☺", {
+                           {tt::root, "$", 0, "$.☺"},
+                           {tt::name, "☺", 2, "$.☺"},
+                           {tt::eof_, "", 5, "$.☺"},
+                       });
+}
+
 // TODO: test escape sequences inside string literals

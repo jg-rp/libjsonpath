@@ -1,4 +1,5 @@
 #include "libjsonpath/lex.hpp"
+#include "libjsonpath/exceptions.hpp"
 #include <cassert>
 #include <format> // std::format
 
@@ -524,32 +525,107 @@ bool Lexer::accept_run(const std::unordered_set<char>& valid) {
 }
 
 bool Lexer::accept_name() {
-  // TODO: exception?
-  assert(m_pos == m_start && "must emit or ignore before consuming whitespace");
-  std::optional<char> c = next();
-
-  // TODO:
-  // XXX: Just ASCII for now.
-  if (c && s_name_first.contains(c.value())) {
-    c = next();
-  } else if (c) {
-    backup();
+  if (!accept_name_first()) {
     return false;
   }
 
-  while (c && s_name_char.contains(c.value())) {
-    c = next();
-  }
-
-  if (c) {
-    backup();
+  while (true) {
+    if (!accept_name_char()) {
+      break;
+    }
   }
 
   return true;
 }
 
-bool Lexer::ignore_whitespace() {
+bool Lexer::accept_name_first() {
+  std::optional<char> maybe_c = next();
+  if (!maybe_c) {
+    backup();
+  }
 
+  char byte{maybe_c.value()};
+
+  if ((byte & 0x80) == 0) {
+    // Single byte character (0x00-0x74)
+    if ((byte >= 0x41 && byte <= 0x5A) || byte == 0x5F ||
+        (byte >= 0x61 && byte <= 0x7A)) {
+      return true; // A-Z or a-z or _
+    }
+    backup();
+    return false;
+  } else if ((byte & 0xE0) == 0xC0) {
+    // Two-byte character (0x80-0x07FF)
+    accept_continuation_byte();
+    return true;
+  } else if ((byte & 0xF0) == 0xE0) {
+    // Three-byte character (0x0800-0xFFFF)
+    accept_continuation_byte();
+    accept_continuation_byte();
+    return true;
+  } else if ((byte & 0xF8) == 0xF0) {
+    // Four-byte character (0x010000-0x10FFFF)
+    accept_continuation_byte();
+    accept_continuation_byte();
+    accept_continuation_byte();
+    return true;
+  }
+  backup();
+  return false;
+}
+
+bool Lexer::accept_name_char() {
+  std::optional<char> maybe_c = next();
+  if (!maybe_c) {
+    return false;
+  }
+
+  char byte{maybe_c.value()};
+
+  if ((byte & 0x80) == 0) {
+    // Single byte character (0x00-0x74)
+    if ((byte >= 0x30 && byte <= 0x39) || (byte >= 0x41 && byte <= 0x5A) ||
+        byte == 0x5F || (byte >= 0x61 && byte <= 0x7A)) {
+      return true; // 0-9 or A-Z or a-z or _
+    }
+    backup();
+    return false;
+  } else if ((byte & 0xE0) == 0xC0) {
+    // Two-byte character (0x80-0x07FF)
+    accept_continuation_byte();
+    return true;
+  } else if ((byte & 0xF0) == 0xE0) {
+    // Three-byte character (0x0800-0xFFFF)
+    accept_continuation_byte();
+    accept_continuation_byte();
+    return true;
+  } else if ((byte & 0xF8) == 0xF0) {
+    // Four-byte character (0x010000-0x10FFFF)
+    accept_continuation_byte();
+    accept_continuation_byte();
+    accept_continuation_byte();
+    return true;
+  } else {
+    error("invalid UTF-8");
+    throw LexerError(m_error, Token{TokenType::error, m_error, m_pos, query});
+  }
+  backup();
+  return false;
+}
+
+void Lexer::accept_continuation_byte() {
+  std::optional<char> continuation_byte{next()};
+  if (!(continuation_byte && (continuation_byte.value() & 0xC0) == 0x80)) {
+    error("invalid UTF-8");
+    throw LexerError(m_error, Token{TokenType::error, m_error, m_pos, query});
+  }
+}
+
+bool Lexer::ignore_whitespace() {
+  // TODO: exception?
+  // Fail loud an early. This would be a bug, not an exception for programmers
+  // to catch.
+  assert(m_pos == m_start && "must emit or ignore before consuming whitespace");
   if (accept_run(Lexer::s_whitespace)) {
     ignore();
     return true;
