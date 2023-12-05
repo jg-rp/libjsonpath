@@ -541,7 +541,7 @@ bool Lexer::accept_name() {
 bool Lexer::accept_name_first() {
   std::optional<char> maybe_c = next();
   if (!maybe_c) {
-    backup();
+    return false;
   }
 
   char byte{maybe_c.value()};
