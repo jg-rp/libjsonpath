@@ -3,6 +3,7 @@
 #include "libjsonpath/utils.hpp" // libjsonpath::singular_query
 #include <cassert>
 #include <charconv>     // std::from_chars
+#include <cstdint>      // std::int32_t
 #include <cstdlib>      // std::strtod
 #include <format>       // std::format
 #include <system_error> // std::errc
@@ -401,12 +402,10 @@ BinaryOperator Parser::get_binary_operator(TokenType tt) const {
 std::string Parser::decode_string_token(const Token& t) const {
   std::string s{t.value};
   if (t.type == TokenType::sq_string) {
-    replaceAll(s, "\"", "\\\"");
+    // replaceAll(s, "\"", "\\\"");
     replaceAll(s, "\\'", "'");
   }
-
-  // TODO: replace UTF-16 escape sequences with unicode chars
-  return s;
+  return unescape_json_string(s, t);
 }
 
 void Parser::throw_for_non_singular_query(const expression_t& expr) const {
@@ -476,6 +475,188 @@ void Parser::replaceAll(std::string& original, std::string_view substring,
     original.replace(pos, substring_length, replacement);
     pos += replacement_length;
   }
+}
+
+std::string Parser::unescape_json_string(
+    std::string_view sv, const Token& token) const {
+  std::string rv{};
+  char byte;               // current byte
+  char digit;              // escape sequence hex digit
+  std::int32_t code_point; // decoded \uXXXX or \uXXXX\uXXXX escape sequence
+  std::string::size_type index{0}; // current byte index in sv
+  std::string::size_type end{0};   // index of the end of a 4 hex digit escape
+  std::string::size_type length{sv.length()};
+
+  while (index < length) {
+    byte = sv[index++];
+    if (byte == '\\') {
+      if (index < length) {
+        digit = sv[index++];
+      } else {
+        throw SyntaxError("invalid escape", token);
+      }
+
+      switch (digit) {
+      case '"':
+        rv.push_back('"');
+        break;
+      case '\\':
+        rv.push_back('\\');
+        break;
+      case '/':
+        rv.push_back('/');
+        break;
+      case 'b':
+        rv.push_back('\b');
+        break;
+      case 'f':
+        rv.push_back('\f');
+        break;
+      case 'n':
+        rv.push_back('\n');
+        break;
+      case 'r':
+        rv.push_back('\r');
+        break;
+      case 't':
+        rv.push_back('\t');
+        break;
+      case 'u':
+        // Decode 4 hex digits.
+        code_point = 0;
+        end = index + 4;
+        if (end > length) {
+          throw SyntaxError("invalid \\uXXXX escape", token);
+        }
+
+        for (; index < end; index++) {
+          digit = sv[index];
+          code_point <<= 4;
+          switch (digit) {
+          case '0':
+          case '1':
+          case '2':
+          case '3':
+          case '4':
+          case '5':
+          case '6':
+          case '7':
+          case '8':
+          case '9':
+            code_point |= (digit - '0');
+            break;
+          case 'a':
+          case 'b':
+          case 'c':
+          case 'd':
+          case 'e':
+          case 'f':
+            code_point |= (digit - 'a' + 10);
+            break;
+          case 'A':
+          case 'B':
+          case 'C':
+          case 'D':
+          case 'E':
+          case 'F':
+            code_point |= (digit - 'A' + 10);
+            break;
+          default:
+            throw SyntaxError("invalid \\uXXXX escape", token);
+          }
+        }
+
+        // Is the code point a high surrogate followed by another 6 byte escape
+        // sequence?
+        if ((code_point >= 0xD800 && code_point <= 0xDBFF) &&
+            index + 6 <= length && sv[index] == '\\' && sv[index + 1] == 'u') {
+          index += 2;
+          std::int32_t low_surrogate = 0;
+          end += 6;
+
+          for (; index < end; index++) {
+            digit = sv[index];
+            low_surrogate <<= 4;
+            switch (digit) {
+            case '0':
+            case '1':
+            case '2':
+            case '3':
+            case '4':
+            case '5':
+            case '6':
+            case '7':
+            case '8':
+            case '9':
+              low_surrogate |= (digit - '0');
+              break;
+            case 'a':
+            case 'b':
+            case 'c':
+            case 'd':
+            case 'e':
+            case 'f':
+              low_surrogate |= (digit - 'a' + 10);
+              break;
+            case 'A':
+            case 'B':
+            case 'C':
+            case 'D':
+            case 'E':
+            case 'F':
+              low_surrogate |= (digit - 'A' + 10);
+              break;
+            default:
+              throw SyntaxError("invalid \\uXXXX escape", token);
+            }
+          }
+
+          // Combine high and low surrogates into a Unicode code point.
+          code_point = 0x10000 + (((code_point & 0x03FF) << 10) |
+                                     (low_surrogate & 0x03FF));
+        }
+
+        rv.append(encode_utf8(code_point, token));
+        break;
+      default:
+        throw SyntaxError("invalid escape", token);
+      }
+
+    } else {
+      rv.push_back(byte);
+    }
+  }
+
+  return rv;
+}
+
+std::string Parser::encode_utf8(
+    std::int32_t code_point, const Token& token) const {
+  std::string rv;
+
+  if (code_point <= 0x7F) {
+    // Single-byte UTF-8 encoding for code points up to 7F(hex)
+    rv += static_cast<char>(code_point & 0x7F);
+  } else if (code_point <= 0x7FF) {
+    // Two-byte UTF-8 encoding for code points up to 7FF(hex)
+    rv += static_cast<char>(0xC0 | ((code_point >> 6) & 0x1F));
+    rv += static_cast<char>(0x80 | (code_point & 0x3F));
+  } else if (code_point <= 0xFFFF) {
+    // Three-byte UTF-8 encoding for code points up to FFFF(hex)
+    rv += static_cast<char>(0xE0 | ((code_point >> 12) & 0x0F));
+    rv += static_cast<char>(0x80 | ((code_point >> 6) & 0x3F));
+    rv += static_cast<char>(0x80 | (code_point & 0x3F));
+  } else if (code_point <= 0x10FFFF) {
+    // Four-byte UTF-8 encoding for code points up to 10FFFF(hex)
+    rv += static_cast<char>(0xF0 | ((code_point >> 18) & 0x07));
+    rv += static_cast<char>(0x80 | ((code_point >> 12) & 0x3F));
+    rv += static_cast<char>(0x80 | ((code_point >> 6) & 0x3F));
+    rv += static_cast<char>(0x80 | (code_point & 0x3F));
+  } else {
+    throw SyntaxError("invalid code point", token);
+  }
+
+  return rv;
 }
 
 } // namespace libjsonpath

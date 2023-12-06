@@ -134,6 +134,14 @@ private:
   // Replace all occurrences of _substring_ with _replacement_ in _original_.
   void replaceAll(std::string& original, std::string_view substring,
       std::string_view replacement) const;
+
+  // Return a copy of _sv_ with all `\uXXXX` escape sequences replaced with
+  // their equivalent UTF-8 encoded bytes.
+  std::string unescape_json_string(
+      std::string_view sv, const Token& token) const;
+
+  // Return the unicode code point _code_point_ encoded in UTF-8.
+  std::string encode_utf8(std::int32_t code_point, const Token& token) const;
 };
 
 } // namespace libjsonpath

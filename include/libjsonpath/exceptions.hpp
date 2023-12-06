@@ -10,9 +10,6 @@
 
 namespace libjsonpath {
 
-// XXX: Really need to iterate/count user perceived characters for a decent
-// exception message.
-
 // Base class for all exceptions thrown from libjsonpath.
 class Exception : public std::exception {
 public:

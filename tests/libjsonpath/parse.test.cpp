@@ -131,7 +131,7 @@ TEST_F(ParserTest, SingleQuotedStringLiteralWithEscape) {
 }
 
 TEST_F(ParserTest, DoubleQuotedStringLiteralWithEscape) {
-  expect_to_string("$[?@.foo == \"ba\\\"r\"]", "$[?@[\'foo\'] == \"ba\\\"r\"]");
+  expect_to_string("$[?@.foo == \"ba\\\"r\"]", "$[?@[\'foo\'] == \"ba\"r\"]");
 }
 
 TEST_F(ParserTest, NotBindsMoreTightlyThanAnd) {
@@ -144,4 +144,12 @@ TEST_F(ParserTest, NotBindsMoreTightlyThanOr) {
 
 TEST_F(ParserTest, ControlPrecedenceWithParens) {
   expect_to_string("$[?!(@.a && !@.b)]", "$[?!(@['a'] && !@['b'])]");
+}
+
+TEST_F(ParserTest, DoubleQuotedEscapedNameSelector) {
+  expect_to_string("$[\"\\u263A\"]", "$['☺']");
+}
+
+TEST_F(ParserTest, DoubleQuotedSurrogatePairNameSelector) {
+  expect_to_string("$[\"\\uD834\\uDD1E\"]", "$['𝄞']");
 }
