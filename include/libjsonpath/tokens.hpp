@@ -40,7 +40,10 @@ enum class TokenType {
   wild,      // *
 };
 
-std::ostream& operator<<(std::ostream& os, TokenType const& token_type);
+// Return a string representation of TokenType _tt_.
+std::string token_type_to_string(TokenType tt);
+
+std::ostream& operator<<(std::ostream& os, TokenType const& tt);
 
 struct Token {
   TokenType type{};
@@ -48,6 +51,9 @@ struct Token {
   std::string::size_type index{};
   std::string_view query{};
 };
+
+// Return a string representation of Token _t_.
+std::string token_to_string(const Token& token);
 
 bool operator==(const Token& lhs, const Token& rhs);
 std::ostream& operator<<(std::ostream& os, Token const& token);

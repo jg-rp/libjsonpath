@@ -102,9 +102,27 @@ TEST_F(ParserTest, FilterIntegerLiteral) {
   expect_to_string("$.some[?(@.thing == 1)]", "$['some'][?@['thing'] == 1]");
 }
 
+TEST_F(ParserTest, FilterIntegerLiteralZero) {
+  expect_to_string("$.some[?(@.thing == 0)]", "$['some'][?@['thing'] == 0]");
+}
+
+TEST_F(ParserTest, FilterIntegerLiteralNegativeZero) {
+  expect_to_string("$.some[?(@.thing == -0)]", "$['some'][?@['thing'] == 0]");
+}
+
 TEST_F(ParserTest, FilterFloatLiteral) {
   expect_to_string(
       "$.some[?(@.thing == 1.1)]", "$['some'][?@['thing'] == 1.1]");
+}
+
+TEST_F(ParserTest, FilterFloatLiteralWithLeadingZero) {
+  expect_to_string(
+      "$.some[?(@.thing == 0.1)]", "$['some'][?@['thing'] == 0.1]");
+}
+
+TEST_F(ParserTest, FilterFloatLiteralWithLeadingNegativeZero) {
+  expect_to_string(
+      "$.some[?(@.thing == -0.1)]", "$['some'][?@['thing'] == -0.1]");
 }
 
 TEST_F(ParserTest, FilterLogicalNot) {

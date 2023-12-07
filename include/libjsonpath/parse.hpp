@@ -110,7 +110,7 @@ protected:
 
   // Return the binary operator for the given token type or raise an exception
   // if the token type does not represent a binary operator.
-  BinaryOperator get_binary_operator(TokenType tt) const;
+  BinaryOperator get_binary_operator(const Token& t) const;
 
   // Decode unicode escape sequences and, when given a single quoted string
   // token, normalize escaped quotes within the string to be suitable for
@@ -121,15 +121,15 @@ protected:
   void throw_for_non_singular_query(const expression_t& expr) const;
 
 private:
-  // Convert a string view to an integer. It is assumed that the view is
+  // Convert a Token's value to an int. It is assumed that the view is
   // composed of digits with the possibility of a leading minus sign, as
   // one would get from a _Token_ of type _index_.
-  std::int64_t svtoi(std::string_view sv) const;
+  std::int64_t token_to_int(const Token& t) const;
 
-  // Convert a string view to a double. It is assumed that the view contains a
-  // valid string representation of a float, as we'd get from a `Token` of type
-  // `float_`.
-  double svtod(std::string_view sv) const;
+  // Convert a Token's value to a double. It is assumed that the view contains
+  // a valid string representation of a float, as we'd get from a `Token` of
+  // type `float_`.
+  double token_to_double(const Token& t) const;
 
   // Replace all occurrences of _substring_ with _replacement_ in _original_.
   void replaceAll(std::string& original, std::string_view substring,

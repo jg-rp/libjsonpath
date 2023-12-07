@@ -36,3 +36,20 @@ TEST_F(ErrorTest, NonSingularQueryInComparison) {
   expect_syntax_error(
       "$[?@[*]==0]", "non-singular query is not comparable ('$[?@[*]==0]':3)");
 }
+
+TEST_F(ErrorTest, IntLiteralWithLeadingZero) {
+  expect_syntax_error("$.some[?(@.thing == 01)]",
+      "integers with a leading zero are not "
+      "allowed ('$.some[?(@.thing == 01)]':20)");
+}
+
+TEST_F(ErrorTest, NegativeIntLiteralWithLeadingZero) {
+  expect_syntax_error("$.some[?(@.thing == -01)]",
+      "integers with a leading zero are not "
+      "allowed ('$.some[?(@.thing == -01)]':20)");
+}
+
+TEST_F(ErrorTest, ArrayIndexWithLeadingZero) {
+  expect_syntax_error("$.foo[01]",
+      "array indicies with a leading zero are not allowed ('$.foo[01]':6)");
+}

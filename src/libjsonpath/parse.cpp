@@ -111,7 +111,7 @@ std::vector<selector_t> Parser::parse_bracketed_selection(
       if (std::next(tokens)->type == TokenType::colon) {
         items.push_back(parse_slice_selector(tokens));
       } else {
-        items.push_back(IndexSelector{current, svtoi(tokens->value)});
+        items.push_back(IndexSelector{current, token_to_int(*tokens)});
       }
       break;
     case TokenType::colon:
@@ -148,7 +148,7 @@ SliceSelector Parser::parse_slice_selector(TokenIterator& tokens) const {
   SliceSelector selector{*tokens, std::nullopt, std::nullopt, std::nullopt};
 
   if (tokens->type == TokenType::index) {
-    selector.start = std::optional<int>{svtoi(tokens->value)};
+    selector.start = std::optional<int>{token_to_int(*tokens)};
     tokens++;
     expect(tokens, TokenType::colon);
     tokens++;
@@ -158,7 +158,7 @@ SliceSelector Parser::parse_slice_selector(TokenIterator& tokens) const {
   }
 
   if (tokens->type == TokenType::index) {
-    selector.stop = std::optional<int>{svtoi(tokens->value)};
+    selector.stop = std::optional<int>{token_to_int(*tokens)};
     tokens++;
   }
 
@@ -167,7 +167,7 @@ SliceSelector Parser::parse_slice_selector(TokenIterator& tokens) const {
   }
 
   if (tokens->type == TokenType::index) {
-    selector.step = std::optional<int>{svtoi(tokens->value)};
+    selector.step = std::optional<int>{token_to_int(*tokens)};
     tokens++;
   }
 
@@ -201,11 +201,11 @@ StringLiteral Parser::parse_string_literal(TokenIterator& tokens) const {
 };
 
 IntegerLiteral Parser::parse_integer_literal(TokenIterator& tokens) const {
-  return IntegerLiteral{*tokens, svtoi(tokens->value)};
+  return IntegerLiteral{*tokens, token_to_int(*tokens)};
 };
 
 FloatLiteral Parser::parse_float_literal(TokenIterator& tokens) const {
-  return FloatLiteral{*tokens, svtod(tokens->value)};
+  return FloatLiteral{*tokens, token_to_double(*tokens)};
 };
 
 std::unique_ptr<LogicalNotExpression> Parser::parse_logical_not(
@@ -223,7 +223,7 @@ std::unique_ptr<InfixExpression> Parser::parse_infix(
   auto token{*tokens};
   tokens++;
   auto precedence{get_precedence(token.type)};
-  auto op{get_binary_operator(token.type)};
+  auto op{get_binary_operator(token)};
   auto right{parse_filter_expression(tokens, precedence)};
 
   // Non-singular queries are not allowed to be compared.
@@ -248,8 +248,7 @@ expression_t Parser::parse_grouped_expression(TokenIterator& tokens) const {
 
   while (tokens->type != TokenType::rparen) {
     if (tokens->type == TokenType::eof_) {
-      // TODO: raise an exception
-      assert(false && "unbalanced parentheses");
+      throw SyntaxError("unbalanced parentheses", *tokens);
     }
     expr = parse_infix(tokens, std::move(expr));
   }
@@ -303,18 +302,14 @@ expression_t Parser::parse_filter_token(TokenIterator& tokens) const {
   case TokenType::func_:
     return parse_function_call(tokens);
   case TokenType::rbracket:
-    // TODO: raise an exception
-    // unexpected end of expression (eof ir rbracket)?
-    assert(false && "unexpected end of filter expression, found rbracket");
+    throw SyntaxError(
+        "unexpected end of filter expression, found rbracket", *tokens);
   case TokenType::eof_:
-    // TODO: raise an exception
-    // unexpected end of expression (eof ir rbracket)?
-    assert(false && "unexpected end of filter expression, found eof");
+    throw SyntaxError(
+        "unexpected end of filter expression, found eof", *tokens);
     break;
   default:
-    // TODO: raise an exception
-    // unexpected end of expression (eof ir rbracket)?
-    assert(false && "unexpected token for filter expression");
+    throw SyntaxError("unexpected end of filter expression", *tokens);
     break;
   }
 }
@@ -377,15 +372,21 @@ expression_t Parser::parse_filter_expression(
 };
 
 void Parser::expect(TokenIterator it, TokenType tt) const {
-  // TODO: raise an exception
-  // TODO: token type to string
-  assert(it->type == tt && "unexpected token");
+  if (it->type != tt) {
+    throw SyntaxError("unexpected token, expected "s +
+                          token_type_to_string(tt) + " found "s +
+                          token_type_to_string(it->type),
+        *it);
+  }
 }
 
 void Parser::expect_peek(TokenIterator it, TokenType tt) const {
-  // TODO: raise an exception
-  // TODO: token type to string
-  assert(std::next(it)->type == tt && "unexpected token");
+  if (std::next(it)->type != tt) {
+    throw SyntaxError("unexpected token, expected "s +
+                          token_type_to_string(tt) + " found "s +
+                          token_type_to_string(std::next(it)->type),
+        *(std::next(it)));
+  }
 }
 
 int Parser::get_precedence(TokenType tt) const noexcept {
@@ -396,11 +397,10 @@ int Parser::get_precedence(TokenType tt) const noexcept {
   return it->second;
 }
 
-BinaryOperator Parser::get_binary_operator(TokenType tt) const {
-  auto it{BINARY_OPERATORS.find(tt)};
+BinaryOperator Parser::get_binary_operator(const Token& t) const {
+  auto it{BINARY_OPERATORS.find(t.type)};
   if (it == BINARY_OPERATORS.end()) {
-    // TODO: raise an exception
-    assert(false && "unknown operator");
+    throw SyntaxError("unknown operator "s + std::string(t.value), t);
   }
   return it->second;
 }
@@ -432,40 +432,37 @@ void Parser::throw_for_non_singular_query(const expression_t& expr) const {
   }
 }
 
-std::int64_t Parser::svtoi(std::string_view sv) const {
-  if (sv.size() > 1 && sv.starts_with("0")) {
-    // TODO: raise an exception
-    assert(false && "leading zero in array index");
+std::int64_t Parser::token_to_int(const Token& t) const {
+  if (t.value.size() > 1 && t.value.starts_with("0")) {
+    if (t.type == TokenType::index) {
+      throw SyntaxError(
+          "array indicies with a leading zero are not allowed", t);
+    }
+    throw SyntaxError("integers with a leading zero are not allowed", t);
   }
 
-  if (sv.starts_with("-0")) {
-    // TODO: raise an exception
-    assert(false && "negative zero");
+  if (t.value.starts_with("-0")) {
+    if (t.type == TokenType::index) {
+      throw SyntaxError("negative zero array indicies are not allowed", t);
+    }
+
+    if (t.value.size() > 2) {
+      throw SyntaxError("integers with a leading zero are not allowed", t);
+    }
   }
 
   std::int64_t number;
-  auto [_, err] = std::from_chars(sv.data(), sv.data() + sv.size(), number);
+  auto [_, err] =
+      std::from_chars(t.value.data(), t.value.data() + t.value.size(), number);
   assert(err == std::errc{});
   return number;
 }
 
-double Parser::svtod(std::string_view sv) const {
-  if (sv.size() > 1 && sv.starts_with("0")) {
-    // TODO: raise an exception
-    assert(false && "leading zero in array index");
-  }
-
-  if (sv.starts_with("-0")) {
-    // TODO: raise an exception
-    assert(false && "negative zero");
-  }
-
-  // NOTE: double from_chars is not yet implemented, sometimes.
-  std::string null_terminated_str(sv);
+double Parser::token_to_double(const Token& t) const {
+  // NOTE: double std::from_chars is not yet implemented, sometimes.
+  std::string null_terminated_str(t.value);
   char* endptr;
   double result = std::strtod(null_terminated_str.c_str(), &endptr);
-
-  // TODO: raise an exception
   assert(endptr != null_terminated_str.c_str() && "can't convert to double");
   assert(*endptr == '\0' && "double conversion stopped early");
   return result;
