@@ -222,17 +222,22 @@ std::unique_ptr<InfixExpression> Parser::parse_infix(
     TokenIterator& tokens, expression_t left) const {
   auto token{*tokens};
   tokens++;
-  auto right{parse_filter_expression(tokens, get_precedence(token.type))};
+  auto precedence{get_precedence(token.type)};
+  auto op{get_binary_operator(token.type)};
+  auto right{parse_filter_expression(tokens, precedence)};
 
-  // XXX: should this only be for expression with comparison operators?
-  throw_for_non_singular_query(left);
-  throw_for_non_singular_query(right);
+  // Non-singular queries are not allowed to be compared.
+  // Use precedence to determine if the operator is a comparison operator.
+  if (precedence == PRECEDENCE_COMPARISON) {
+    throw_for_non_singular_query(left);
+    throw_for_non_singular_query(right);
+  }
 
   return std::make_unique<InfixExpression>(InfixExpression{
       token,
-      std::move(left),                 // pointer to left-hand expression
-      get_binary_operator(token.type), // binary operator
-      std::move(right),
+      std::move(left),  // pointer to left-hand expression
+      op,               // binary operator
+      std::move(right), // pointer to right-hand expression
   });
 };
 

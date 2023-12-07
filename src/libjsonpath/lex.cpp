@@ -470,7 +470,6 @@ std::string_view Lexer::view() const {
 void Lexer::ignore() { m_start = m_pos; }
 
 void Lexer::backup() {
-  // TODO:
   // assert(m_pos > m_start && "can't backup beyond start");
   if (m_pos > m_start) {
     --m_pos;
@@ -622,9 +621,7 @@ void Lexer::accept_continuation_byte() {
 }
 
 bool Lexer::ignore_whitespace() {
-  // TODO: exception?
-  // Fail loud an early. This would be a bug, not an exception for programmers
-  // to catch.
+  // This would be a bug, not an exception for programmers to catch.
   assert(m_pos == m_start && "must emit or ignore before consuming whitespace");
   if (accept_run(Lexer::s_whitespace)) {
     ignore();
