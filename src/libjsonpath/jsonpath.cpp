@@ -3,11 +3,12 @@
 #include "libjsonpath/lex.hpp"        // libjsonpath::Lexer
 #include "libjsonpath/parse.hpp"      // libjsonpath::Parser
 #include "libjsonpath/tokens.hpp"     // libjsonpath::TokenType
-#include <format>                     // std::format
 #include <string>                     // std::string
 #include <variant>                    // std::visit
 
 namespace libjsonpath {
+
+using namespace std::string_literals;
 
 segments_t parse(std::string_view s) {
   Lexer lexer{s};
@@ -30,7 +31,7 @@ std::string to_string(const segments_t& path) {
 
 std::string SelectorToStringVisitor::operator()(
     const NameSelector& selector) const {
-  return std::format("'{}'", selector.name);
+  return "'"s + selector.name + "'"s;
 };
 
 std::string SelectorToStringVisitor::operator()(
@@ -44,10 +45,9 @@ std::string SelectorToStringVisitor::operator()(const WildSelector&) const {
 
 std::string SelectorToStringVisitor::operator()(
     const SliceSelector& selector) const {
-  return std::format("{}:{}:{}",
-      selector.start ? std::to_string(selector.start.value()) : "",
-      selector.stop ? std::to_string(selector.stop.value()) : "",
-      selector.step ? std::to_string(selector.step.value()) : "1");
+  return (selector.start ? std::to_string(selector.start.value()) : ""s) + ":" +
+         (selector.stop ? std::to_string(selector.stop.value()) : ""s) + ":" +
+         (selector.step ? std::to_string(selector.step.value()) : "1"s);
 };
 
 std::string SelectorToStringVisitor::operator()(
@@ -95,12 +95,15 @@ std::string ExpressionToStringVisitor::operator()(
 std::string ExpressionToStringVisitor::operator()(
     const FloatLiteral& expression) const {
   // NOTE: std::to_string adds trailing zeros
-  return std::format("{}", expression.value);
+  std::string rv = std::to_string(expression.value);
+  rv.erase(rv.find_last_not_of('0') + 1, std::string::npos);
+  rv.erase(rv.find_last_not_of('.') + 1, std::string::npos);
+  return rv;
 };
 
 std::string ExpressionToStringVisitor::operator()(
     const StringLiteral& expression) const {
-  return std::format("\"{}\"", expression.value);
+  return "\""s + expression.value + "\"";
 };
 
 std::string ExpressionToStringVisitor::operator()(
@@ -136,15 +139,13 @@ std::string ExpressionToStringVisitor::operator()(
     const std::unique_ptr<InfixExpression>& expression) const {
   if (expression->op == BinaryOperator::logical_and ||
       expression->op == BinaryOperator::logical_or) {
-    return std::format("({} {} {})",
-        std::visit(ExpressionToStringVisitor(), expression->left),
-        binary_operator_to_string(expression->op),
-        std::visit(ExpressionToStringVisitor(), expression->right));
+    return "("s + std::visit(ExpressionToStringVisitor(), expression->left) +
+           " " + binary_operator_to_string(expression->op) + " " +
+           std::visit(ExpressionToStringVisitor(), expression->right) + ")"s;
   }
-  return std::format("{} {} {}",
-      std::visit(ExpressionToStringVisitor(), expression->left),
-      binary_operator_to_string(expression->op),
-      std::visit(ExpressionToStringVisitor(), expression->right));
+  return std::visit(ExpressionToStringVisitor(), expression->left) + " " +
+         binary_operator_to_string(expression->op) + " " +
+         std::visit(ExpressionToStringVisitor(), expression->right);
 };
 
 std::string ExpressionToStringVisitor::operator()(

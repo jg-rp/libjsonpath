@@ -1,9 +1,10 @@
 #include "libjsonpath/lex.hpp"
 #include "libjsonpath/exceptions.hpp"
 #include <cassert>
-#include <format> // std::format
 
 namespace libjsonpath {
+
+using namespace std::string_literals;
 
 Lexer::Lexer(std::string_view query)
     : query{query}, m_length{query.length()} {};
@@ -12,7 +13,7 @@ Lexer::State Lexer::lex_root() {
   const auto c{next()};
   if (c && c.value() != '$') {
     backup();
-    error(std::format("expected '$', found '{}'", c.value_or(' ')));
+    error("expected '$', found '"s + c.value_or(' ') + "'"s);
     return ERROR;
   }
   emit(TokenType::root);
@@ -48,8 +49,7 @@ Lexer::State Lexer::lex_segment() {
     if (m_filter_nesting_level) {
       return LEX_INSIDE_FILTER;
     }
-    error(std::format(
-        "expected '.', '..' or a bracketed selection, found '{}'", c));
+    error("expected '.', '..' or a bracketed selection, found '"s + c + "'"s);
     return ERROR;
   }
 }
@@ -75,7 +75,7 @@ Lexer::State Lexer::lex_descendant_selection() {
       emit(TokenType::name);
       return LEX_SEGMENT;
     } else {
-      error(std::format("unexpected descendant selection token '{}'", c));
+      error("unexpected descendant selection token '"s + c + "'"s);
       return ERROR;
     }
   }
@@ -100,7 +100,7 @@ Lexer::State Lexer::lex_dot_selector() {
     emit(TokenType::name);
     return LEX_SEGMENT;
   } else {
-    error(std::format("unexpected shorthand selector '{}'", c.value()));
+    error("unexpected shorthand selector '"s + c.value() + "'"s);
     return ERROR;
   }
 }
@@ -391,7 +391,7 @@ Lexer::State Lexer::lex_inside_filter() {
       }
     }
 
-    error(std::format("unexpected filter selection token '{}'", c.value()));
+    error("unexpected filter selection token '"s + c.value() + "'"s);
     return ERROR;
   }
 }

@@ -2,13 +2,12 @@
 #define LIBJSONPATH_SELECTORS_H_
 
 #include "libjsonpath/tokens.hpp" // Token
-#include <cstdint>                // int64_t
-#include <format>                 // format
-#include <memory>                 // unique_ptr
-#include <optional>               // optional
-#include <string>                 // string_view
-#include <variant>                // variant
-#include <vector>                 // vector
+#include <cstdint>                // std::int64_t
+#include <memory>                 // std::unique_ptr
+#include <optional>               // std::optional
+#include <string>                 // std::string_view
+#include <variant>                // std::variant
+#include <vector>                 // std::vector
 
 namespace libjsonpath {
 

@@ -2,11 +2,10 @@
 #define LIBJSONPATH_LEX_H_
 
 #include "libjsonpath/tokens.hpp"
-#include <deque>         // std::deque
-#include <format>        // std::format
-#include <optional>      // std::optional
-#include <stack>         // std::stack
-#include <string>        // std::string std::string::size_type
+#include <deque>    // std::deque
+#include <optional> // std::optional
+#include <stack>    // std::stack
+#include <string> // std::string std::string::size_type std::string_literals std::to_string
 #include <unordered_set> // std::unordered_set
 
 namespace libjsonpath {
@@ -145,6 +144,7 @@ private:
   // _token_type_ token type and returning _next_state_.
   template <State next_state, char quote, TokenType tt>
   State lex_inside_string() {
+    using namespace std::string_literals;
     ignore(); // Discard the opening quote.
 
     // Empty string?
@@ -170,13 +170,12 @@ private:
 
       if (c.value_or(' ') == '\\' &&
           !(s_escapes.contains(peek().value_or(' ')))) {
-        error(std::format(
-            "invalid escape sequence '\\{}'", peek().value_or(' ')));
+        error("invalid escape sequence '\\'"s + peek().value_or(' '));
         return ERROR;
       }
 
       if (!c) {
-        error(std::format("unclosed string starting at index {}", m_start));
+        error("unclosed string starting at index "s + std::to_string(m_start));
         return ERROR;
       }
 

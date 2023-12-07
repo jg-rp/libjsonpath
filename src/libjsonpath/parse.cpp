@@ -5,12 +5,13 @@
 #include <charconv>     // std::from_chars
 #include <cstdint>      // std::int32_t
 #include <cstdlib>      // std::strtod
-#include <format>       // std::format
 #include <system_error> // std::errc
 #include <utility>      // std::move
 #include <variant>      // std::holds_alternative std::get
 
 namespace libjsonpath {
+
+using namespace std::string_literals;
 
 segments_t Parser::parse(const Tokens& tokens) const {
   TokenIterator it = tokens.cbegin();
@@ -23,7 +24,8 @@ segments_t Parser::parse(const Tokens& tokens) const {
 
   if (it->type != TokenType::eof_) {
     throw SyntaxError(
-        std::format("expected end of query, found '{}'", it->value), *it);
+        "expected end of query, found '{"s + std::string(it->value) + "'"s,
+        *it);
   }
 
   return segments;
@@ -121,9 +123,8 @@ std::vector<selector_t> Parser::parse_bracketed_selection(
     case TokenType::eof_:
       throw SyntaxError("unexpected end of query", current);
     default:
-      throw SyntaxError(
-          std::format(
-              "unexpected token in bracketed selection '{}'", current.value),
+      throw SyntaxError("unexpected token in bracketed selection '"s +
+                            std::string(current.value) + "'"s,
           current);
     }
 

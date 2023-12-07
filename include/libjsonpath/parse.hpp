@@ -50,7 +50,7 @@ const std::unordered_map<TokenType, BinaryOperator> BINARY_OPERATORS{
     {TokenType::or_, BinaryOperator::logical_or},
 };
 
-// The JSONPath quey expression parser.
+// The JSONPath query expression parser.
 //
 // An instance of _libjsonpath::Parser_ does not maintain any state, so
 // repeated calls to _Parser.parse()_ are OK and, in fact, encouraged.

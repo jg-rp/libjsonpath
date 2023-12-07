@@ -3,20 +3,25 @@
 #include "libjsonpath/tokens.hpp"
 #include <algorithm>   // std::count
 #include <exception>   // std::exception
-#include <format>      // std::format
 #include <iterator>    // std::advance
+#include <sstream>     // std::ostringstream
 #include <string>      // std::string
 #include <string_view> // std::string_view
 
 namespace libjsonpath {
 
+static std::string format_exception(
+    std::string_view message, const Token& token) {
+  std::ostringstream rv{};
+  rv << message << " ('" << token.query << "':" << token.index << ")";
+  return rv.str();
+}
+
 // Base class for all exceptions thrown from libjsonpath.
 class Exception : public std::exception {
 public:
   Exception(std::string_view message, const Token& token)
-      : m_message{std::format(
-            "{} ('{}':{})", message, token.query, token.index)},
-        m_token{token} {};
+      : m_message{format_exception(message, token)}, m_token{token} {};
 
   const char* what() const noexcept override { return m_message.c_str(); };
   const Token& token() const noexcept { return m_token; };
