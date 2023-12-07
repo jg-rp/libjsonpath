@@ -1,11 +1,15 @@
 #ifndef LIBJSONPATH_JSONPATH_H
 #define LIBJSONPATH_JSONPATH_H
 
+#include "libjsonpath/config.hpp"
 #include "libjsonpath/selectors.hpp"
 #include <string>
 #include <string_view>
 
 namespace libjsonpath {
+
+// libjsonpath version number.
+inline constexpr std::string_view VERSION{LIBJSONPATH_VERSION};
 
 // Return a sequence of JSONPath segments. If a segment contains a filter
 // selector, the selector's _expression_ member will effectively be the root
