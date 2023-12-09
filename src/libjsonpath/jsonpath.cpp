@@ -131,7 +131,6 @@ static std::string binary_operator_to_string(BinaryOperator op) {
     return "!=";
   default:
     return "OPERATOR ERROR";
-    break;
   }
 }
 

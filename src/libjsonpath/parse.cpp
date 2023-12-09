@@ -307,10 +307,8 @@ expression_t Parser::parse_filter_token(TokenIterator& tokens) const {
   case TokenType::eof_:
     throw SyntaxError(
         "unexpected end of filter expression, found eof", *tokens);
-    break;
   default:
     throw SyntaxError("unexpected end of filter expression", *tokens);
-    break;
   }
 }
 
