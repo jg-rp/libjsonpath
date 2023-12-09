@@ -30,7 +30,7 @@ else()
       -Wpedantic
       -Wshadow
       -Wnon-virtual-dtor
-      -Wunreachable-code-aggressive
+      # -Wunreachable-code-aggressive
     )
 endif()
 
