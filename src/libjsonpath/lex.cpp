@@ -26,7 +26,7 @@ Lexer::State Lexer::lex_segment() {
     return ERROR;
   }
 
-  const auto maybe_c(next());
+  const auto maybe_c{next()};
   if (!maybe_c) {
     emit(TokenType::eof_);
     return NONE;
@@ -608,8 +608,6 @@ bool Lexer::accept_name_char() {
     error("invalid UTF-8");
     throw LexerError(m_error, Token{TokenType::error, m_error, m_pos, query});
   }
-  backup();
-  return false;
 }
 
 void Lexer::accept_continuation_byte() {

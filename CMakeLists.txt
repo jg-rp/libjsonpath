@@ -24,7 +24,14 @@ if (MSVC)
     target_compile_options(libjsonpath_compiler_flags INTERFACE /W4)
 else()
     # additional warnings
-    target_compile_options(libjsonpath_compiler_flags INTERFACE -Wall -Wextra -Wpedantic -Wshadow -Wnon-virtual-dtor)
+    target_compile_options(libjsonpath_compiler_flags INTERFACE
+      -Wall
+      -Wextra
+      -Wpedantic
+      -Wshadow
+      -Wnon-virtual-dtor
+      -Wunreachable-code-aggressive
+    )
 endif()
 
 # libjsonpath
