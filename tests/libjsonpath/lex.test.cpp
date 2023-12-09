@@ -12,7 +12,6 @@ protected:
   void expect_tokens(
       std::string_view query, const std::vector<libjsonpath::Token>& want) {
     libjsonpath::Lexer lexer{query};
-    EXPECT_EQ(lexer.query, query);
     EXPECT_EQ(lexer.tokens().size(), 0);
 
     lexer.run();

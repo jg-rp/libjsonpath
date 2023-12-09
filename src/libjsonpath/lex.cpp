@@ -7,7 +7,7 @@ namespace libjsonpath {
 using namespace std::string_literals;
 
 Lexer::Lexer(std::string_view query)
-    : query{query}, m_length{query.length()} {};
+    : m_query{query}, m_length{query.length()} {};
 
 Lexer::State Lexer::lex_root() {
   const auto c{next()};
@@ -446,10 +446,10 @@ void Lexer::run() {
 };
 
 void Lexer::emit(TokenType t) {
-  std::string_view view{query};
+  std::string_view view{m_query};
   view.remove_prefix(m_start);
   view.remove_suffix(m_length - m_pos);
-  m_tokens.push_back(Token{t, view, m_start, query});
+  m_tokens.push_back(Token{t, view, m_start, m_query});
   m_start = m_pos;
 };
 
@@ -458,11 +458,11 @@ std::optional<char> Lexer::next() {
     return std::nullopt;
   }
 
-  return std::optional<char>(std::in_place, query[m_pos++]);
+  return std::optional<char>(std::in_place, m_query[m_pos++]);
 };
 
 std::string_view Lexer::view() const {
-  std::string_view view_{query};
+  std::string_view view_{m_query};
   view_.remove_prefix(m_pos);
   return view_;
 }
@@ -606,7 +606,7 @@ bool Lexer::accept_name_char() {
     return true;
   } else {
     error("invalid UTF-8");
-    throw LexerError(m_error, Token{TokenType::error, m_error, m_pos, query});
+    throw LexerError(m_error, Token{TokenType::error, m_error, m_pos, m_query});
   }
 }
 
@@ -614,7 +614,7 @@ void Lexer::accept_continuation_byte() {
   std::optional<char> continuation_byte{next()};
   if (!(continuation_byte && (continuation_byte.value() & 0xC0) == 0x80)) {
     error("invalid UTF-8");
-    throw LexerError(m_error, Token{TokenType::error, m_error, m_pos, query});
+    throw LexerError(m_error, Token{TokenType::error, m_error, m_pos, m_query});
   }
 }
 
@@ -630,7 +630,7 @@ bool Lexer::ignore_whitespace() {
 
 void Lexer::error(std::string_view message) {
   m_error = message;
-  m_tokens.push_back(Token{TokenType::error, m_error, m_pos, query});
+  m_tokens.push_back(Token{TokenType::error, m_error, m_pos, m_query});
 }
 
 } // namespace libjsonpath

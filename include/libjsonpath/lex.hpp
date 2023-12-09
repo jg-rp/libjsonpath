@@ -10,12 +10,9 @@
 
 namespace libjsonpath {
 
-// TODO: noexcept?
-
 class Lexer {
 public:
   Lexer(std::string_view query);
-  const std::string_view query;
 
   // Start the state machine.
   void run();
@@ -43,7 +40,8 @@ private:
     LEX_INSIDE_DOUBLE_QUOTED_FILTER_STRING,
   };
 
-  const std::string::size_type m_length;
+  const std::string_view m_query{};
+  const std::string::size_type m_length{};
   std::string m_error{};
   std::deque<Token> m_tokens{};
 
