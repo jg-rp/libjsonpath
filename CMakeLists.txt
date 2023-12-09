@@ -1,24 +1,34 @@
-cmake_minimum_required(VERSION 3.0.0)
-project(libjsonpath VERSION 0.1.0 LANGUAGES CXX)
+cmake_minimum_required(VERSION 3.15)
 
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED True)
+project(libjsonpath
+  VERSION 0.1.0
+  LANGUAGES CXX
+  DESCRIPTION "A JSONPath parser"
+  HOMEPAGE_URL "https://github.com/jg-rp/libjsonpath"
+)
 
 configure_file(
-  ${CMAKE_CURRENT_SOURCE_DIR}/include/libjsonpath/config.hpp.in
+  ${CMAKE_CURRENT_SOURCE_DIR}/config.hpp.in
   ${CMAKE_CURRENT_SOURCE_DIR}/include/libjsonpath/config.hpp
 )
 
+set(INSTALL_GTEST OFF)
+
+# libjsonpath_compiler_flags
+add_library(libjsonpath_compiler_flags INTERFACE)
+
+target_compile_features(libjsonpath_compiler_flags INTERFACE cxx_std_20)
+
 if (MSVC)
     # warning level 4
-    add_compile_options(/W4)
+    target_compile_options(libjsonpath_compiler_flags INTERFACE /W4)
 else()
     # additional warnings
-    add_compile_options(-Wall -Wextra -Wpedantic -Wshadow -Wnon-virtual-dtor)
+    target_compile_options(libjsonpath_compiler_flags INTERFACE -Wall -Wextra -Wpedantic -Wshadow -Wnon-virtual-dtor)
 endif()
 
-add_executable(libjsonpath
-  dev.cpp
+# libjsonpath
+add_library(jsonpath
   src/libjsonpath/lex.cpp
   src/libjsonpath/tokens.cpp
   src/libjsonpath/parse.cpp
@@ -26,12 +36,18 @@ add_executable(libjsonpath
   src/libjsonpath/utils.cpp
 )
 
-target_include_directories(libjsonpath PUBLIC 
+target_link_libraries(jsonpath PUBLIC libjsonpath_compiler_flags)
+
+target_include_directories(jsonpath PUBLIC 
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>  
 )
 
+install(TARGETS jsonpath libjsonpath_compiler_flags DESTINATION lib)
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/libjsonpath DESTINATION include)
 
+
+# Fetch Google Test
 include(FetchContent)
 FetchContent_Declare(
   googletest
@@ -58,6 +74,7 @@ target_include_directories(lexer_tests PUBLIC
 
 target_link_libraries(
   lexer_tests
+  libjsonpath_compiler_flags
   GTest::gtest_main
 )
 
@@ -80,6 +97,7 @@ target_include_directories(parser_tests PUBLIC
 
 target_link_libraries(
   parser_tests
+  libjsonpath_compiler_flags
   GTest::gtest_main
 )
 
@@ -101,12 +119,11 @@ target_include_directories(error_tests PUBLIC
 
 target_link_libraries(
   error_tests
+  libjsonpath_compiler_flags
   GTest::gtest_main
 )
 
 include(GoogleTest)
-gtest_discover_tests(lexer_tests parser_tests error_tests)
-
-# set(CPACK_PROJECT_NAME ${PROJECT_NAME})
-# set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
-# include(CPack)
+gtest_discover_tests(lexer_tests)
+gtest_discover_tests(parser_tests)
+gtest_discover_tests(error_tests)
