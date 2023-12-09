@@ -3,7 +3,7 @@
 #include "libjsonpath/utils.hpp" // libjsonpath::singular_query
 #include <cassert>
 #include <charconv>     // std::from_chars
-#include <cstdint>      // std::int32_t
+#include <cstdint>      // std::int32_t std::int64_t
 #include <cstdlib>      // std::strtod
 #include <system_error> // std::errc
 #include <utility>      // std::move
@@ -148,7 +148,7 @@ SliceSelector Parser::parse_slice_selector(TokenIterator& tokens) const {
   SliceSelector selector{*tokens, std::nullopt, std::nullopt, std::nullopt};
 
   if (tokens->type == TokenType::index) {
-    selector.start = std::optional<int>{token_to_int(*tokens)};
+    selector.start = std::optional<std::int64_t>{token_to_int(*tokens)};
     tokens++;
     expect(tokens, TokenType::colon);
     tokens++;
@@ -158,7 +158,7 @@ SliceSelector Parser::parse_slice_selector(TokenIterator& tokens) const {
   }
 
   if (tokens->type == TokenType::index) {
-    selector.stop = std::optional<int>{token_to_int(*tokens)};
+    selector.stop = std::optional<std::int64_t>{token_to_int(*tokens)};
     tokens++;
   }
 
@@ -167,7 +167,7 @@ SliceSelector Parser::parse_slice_selector(TokenIterator& tokens) const {
   }
 
   if (tokens->type == TokenType::index) {
-    selector.step = std::optional<int>{token_to_int(*tokens)};
+    selector.step = std::optional<std::int64_t>{token_to_int(*tokens)};
     tokens++;
   }
 
