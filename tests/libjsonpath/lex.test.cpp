@@ -2,7 +2,7 @@
 #include "libjsonpath/tokens.hpp" // libjsonpath::Token
 #include <algorithm>              // std::mismatch
 #include <gtest/gtest.h>          // EXPEXT_* TEST_F testing::Test
-#include <string>                 // std::string_view
+#include <string_view>            // std::string_view
 #include <vector>                 // std::vector
 
 using tt = libjsonpath::TokenType;

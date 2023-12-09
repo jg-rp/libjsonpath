@@ -54,15 +54,6 @@ jobs:
         run: |
           echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
 
-      # See https://github.com/mjp41/workaround8649/blob/main/action.yml
-      - name: "Remove GCC 13 from runner image"
-        if: matrix.cpp_compiler == 'clang++-17'
-        run: |
-          echo "Runs on: ${{ inputs.os }}"
-          sudo rm -f /etc/apt/sources.list.d/ubuntu-toolchain-r-ubuntu-test-jammy.list
-          sudo apt-get update
-          sudo apt-get install -y --allow-downgrades libc6=2.35-0ubuntu3.4 libc6-dev=2.35-0ubuntu3.4 libstdc++6=12.3.0-1ubuntu1~22.04 libgcc-s1=12.3.0-1ubuntu1~22.04
-
       - name: Install newer Clang
         if: matrix.cpp_compiler == 'clang++-17'
         run: |
@@ -79,6 +70,10 @@ jobs:
           -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
           -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
           -S ${{ github.workspace }}
+
+      - name: G++ Version
+        if: matrix.cpp_compiler == 'g++'
+        run: g++ --version
 
       - name: Build
         # Build your program with the given configuration. Note that --config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
