@@ -54,10 +54,9 @@ jobs:
         run: |
           echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
 
-      - name: "[Ubuntu] Remove GCC 13 from runner image"
-        # See https://github.com/mjp41/workaround8649/blob/main/action.yml
-        if: (inputs.os == 'ubuntu-latest') || (inputs.os == 'ubuntu-22.04') || (inputs.os == 'default')
-        shell: bash
+      # See https://github.com/mjp41/workaround8649/blob/main/action.yml
+      - name: "Remove GCC 13 from runner image"
+        if: matrix.cpp_compiler == 'clang++-17'
         run: |
           echo "Runs on: ${{ inputs.os }}"
           sudo rm -f /etc/apt/sources.list.d/ubuntu-toolchain-r-ubuntu-test-jammy.list
