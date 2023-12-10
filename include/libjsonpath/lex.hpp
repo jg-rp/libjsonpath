@@ -161,13 +161,13 @@ private:
       v = view();
       c = next();
 
-      if (v.starts_with("\\\\") || v.starts_with(escaped_quote)) {
+      if (v.rfind("\\\\", 0) == 0 || v.rfind(escaped_quote, 0) == 0) {
         next();
         continue;
       }
 
       if (c.value_or(' ') == '\\' &&
-          !(s_escapes.contains(peek().value_or(' ')))) {
+          !(s_escapes.find(peek().value_or(' ')) != s_escapes.end())) {
         error("invalid escape sequence '\\'"s + peek().value_or(' '));
         return ERROR;
       }

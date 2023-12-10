@@ -1,6 +1,6 @@
 # libjsonpath
 
-A JSONPath parser written in C++, targeting C++20.
+A JSONPath parser written in C++, targeting C++17.
 
 This project is a work in progress. So far we have a lexer producing a `std::deque<Token>`, and a parser that parses those tokens into a `std::vector<std::variant<Segment, RecursiveSegment>>`. When a segment includes a filter selector, that filter selector's `expression` member is effectively the root of a parse tree for the filter expression. See `include/libjsonpath/selectors.hpp` for a description of segment, selector and filter expression nodes.
 

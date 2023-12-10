@@ -322,7 +322,8 @@ std::unique_ptr<FunctionCall> Parser::parse_function_call(
     expression_t node{parse_filter_token(tokens)};
 
     // Is this function call part of a comparison or logical expression?
-    while (BINARY_OPERATORS.contains(std::next(tokens)->type)) {
+    while (BINARY_OPERATORS.find(std::next(tokens)->type) !=
+           BINARY_OPERATORS.end()) {
       tokens++;
       node = parse_infix(tokens, std::move(node));
     }
@@ -358,7 +359,8 @@ expression_t Parser::parse_filter_expression(
       break;
     }
 
-    if (!BINARY_OPERATORS.contains(peek_type)) {
+    if (BINARY_OPERATORS.find(peek_type) == BINARY_OPERATORS.end()) {
+      // BINARY_OPERATORS does not contain peek_type
       return node;
     }
 
@@ -431,7 +433,7 @@ void Parser::throw_for_non_singular_query(const expression_t& expr) const {
 }
 
 std::int64_t Parser::token_to_int(const Token& t) const {
-  if (t.value.size() > 1 && t.value.starts_with("0")) {
+  if (t.value.size() > 1 && t.value.rfind("0", 0) == 0) {
     if (t.type == TokenType::index) {
       throw SyntaxError(
           "array indicies with a leading zero are not allowed", t);
@@ -439,7 +441,7 @@ std::int64_t Parser::token_to_int(const Token& t) const {
     throw SyntaxError("integers with a leading zero are not allowed", t);
   }
 
-  if (t.value.starts_with("-0")) {
+  if (t.value.rfind("-0", 0) == 0) {
     if (t.type == TokenType::index) {
       throw SyntaxError("negative zero array indicies are not allowed", t);
     }
@@ -449,7 +451,7 @@ std::int64_t Parser::token_to_int(const Token& t) const {
     }
   }
 
-  std::int64_t number;
+  std::int64_t number{};
   auto [_, err] =
       std::from_chars(t.value.data(), t.value.data() + t.value.size(), number);
   assert(err == std::errc{});

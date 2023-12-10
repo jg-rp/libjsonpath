@@ -343,32 +343,32 @@ Lexer::State Lexer::lex_inside_filter() {
 
       v = view();
 
-      if (v.starts_with("&&")) {
+      if (v.rfind("&&", 0) == 0) {
         m_pos += 2;
         emit(TokenType::and_);
         continue;
       }
 
-      if (v.starts_with("||")) {
+      if (v.rfind("||", 0) == 0) {
         m_pos += 2;
         emit(TokenType::or_);
         continue;
       }
 
-      if (v.starts_with("true")) {
+      if (v.rfind("true", 0) == 0) {
         m_pos += 4;
         emit(TokenType::true_);
         continue;
         ;
       }
 
-      if (v.starts_with("false")) {
+      if (v.rfind("false", 0) == 0) {
         m_pos += 5;
         emit(TokenType::false_);
         continue;
       }
 
-      if (v.starts_with("null")) {
+      if (v.rfind("null", 0) == 0) {
         m_pos += 4;
         emit(TokenType::null_);
         continue;
@@ -497,7 +497,7 @@ bool Lexer::accept(const char ch) {
 
 bool Lexer::accept(const std::unordered_set<char>& valid) {
   const auto c = next();
-  if (c && valid.contains(c.value())) {
+  if (c && valid.find(c.value()) != valid.end()) {
     return true;
   }
 
@@ -511,7 +511,7 @@ bool Lexer::accept(const std::unordered_set<char>& valid) {
 bool Lexer::accept_run(const std::unordered_set<char>& valid) {
   auto found{false};
   auto c = next();
-  while (c && valid.contains(c.value())) {
+  while (c && valid.find(c.value()) != valid.end()) {
     c = next();
     found = true;
   }

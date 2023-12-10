@@ -17,7 +17,7 @@ set(INSTALL_GTEST OFF)
 # libjsonpath_compiler_flags
 add_library(libjsonpath_compiler_flags INTERFACE)
 
-target_compile_features(libjsonpath_compiler_flags INTERFACE cxx_std_20)
+target_compile_features(libjsonpath_compiler_flags INTERFACE cxx_std_17)
 
 if (MSVC)
     # warning level 4
@@ -36,8 +36,8 @@ else()
       # using regular Clang or AppleClang
 
       # Work around for systems with older libstdc++
-      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
-      set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -stdlib=libc++ -lc++abi")
+      # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+      # set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -stdlib=libc++ -lc++abi")
 
       list(APPEND compiler_options -Wunreachable-code-aggressive)
     endif()
