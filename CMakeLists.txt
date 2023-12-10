@@ -34,11 +34,6 @@ else()
 
     if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
       # using regular Clang or AppleClang
-
-      # Work around for systems with older libstdc++
-      # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
-      # set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -stdlib=libc++ -lc++abi")
-
       list(APPEND compiler_options -Wunreachable-code-aggressive)
     endif()
 
