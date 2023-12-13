@@ -1,5 +1,5 @@
-#ifndef LIBJSONPATH_TOKENS_H_
-#define LIBJSONPATH_TOKENS_H_
+#ifndef LIBJSONPATH_TOKENS_H
+#define LIBJSONPATH_TOKENS_H
 
 #include <iostream>
 #include <string>

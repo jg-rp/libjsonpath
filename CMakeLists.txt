@@ -107,7 +107,7 @@ add_executable(
 
 target_include_directories(parser_tests PUBLIC 
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include>  
+  $<INSTALL_INTERFACE:include>
 )
 
 target_link_libraries(

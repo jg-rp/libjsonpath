@@ -1,9 +1,9 @@
-#ifndef LIBJSONPATH_SELECTORS_H_
-#define LIBJSONPATH_SELECTORS_H_
+#ifndef LIBJSONPATH_SELECTORS_H
+#define LIBJSONPATH_SELECTORS_H
 
 #include "libjsonpath/tokens.hpp" // Token
 #include <cstdint>                // std::int64_t
-#include <memory>                 // std::unique_ptr
+#include <memory>                 // std::shared_ptr
 #include <optional>               // std::optional
 #include <string>                 // std::string_view
 #include <variant>                // std::variant
@@ -40,9 +40,9 @@ struct RootQuery;
 struct FunctionCall;
 
 using expression_t = std::variant<NullLiteral, BooleanLiteral, IntegerLiteral,
-    FloatLiteral, StringLiteral, std::unique_ptr<LogicalNotExpression>,
-    std::unique_ptr<InfixExpression>, std::unique_ptr<RelativeQuery>,
-    std::unique_ptr<RootQuery>, std::unique_ptr<FunctionCall>>;
+    FloatLiteral, StringLiteral, std::shared_ptr<LogicalNotExpression>,
+    std::shared_ptr<InfixExpression>, std::shared_ptr<RelativeQuery>,
+    std::shared_ptr<RootQuery>, std::shared_ptr<FunctionCall>>;
 
 struct NullLiteral {
   Token token{};
@@ -125,7 +125,7 @@ struct FilterSelector {
 };
 
 using selector_t = std::variant<NameSelector, IndexSelector, WildSelector,
-    SliceSelector, std::unique_ptr<FilterSelector>>;
+    SliceSelector, std::shared_ptr<FilterSelector>>;
 
 struct Segment {
   Token token;

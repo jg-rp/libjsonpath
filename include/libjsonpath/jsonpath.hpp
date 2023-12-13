@@ -31,7 +31,7 @@ struct SelectorToStringVisitor {
   std::string operator()(const IndexSelector& selector) const;
   std::string operator()(const WildSelector&) const;
   std::string operator()(const SliceSelector& selector) const;
-  std::string operator()(const std::unique_ptr<FilterSelector>& selector) const;
+  std::string operator()(const std::shared_ptr<FilterSelector>& selector) const;
 };
 
 // A _segments_t_ visitor returning a string representation of each segment in
@@ -52,16 +52,16 @@ struct ExpressionToStringVisitor {
   std::string operator()(const StringLiteral& expression) const;
 
   std::string operator()(
-      const std::unique_ptr<LogicalNotExpression>& expression) const;
+      const std::shared_ptr<LogicalNotExpression>& expression) const;
 
   std::string operator()(
-      const std::unique_ptr<InfixExpression>& expression) const;
+      const std::shared_ptr<InfixExpression>& expression) const;
 
   std::string operator()(
-      const std::unique_ptr<RelativeQuery>& expression) const;
+      const std::shared_ptr<RelativeQuery>& expression) const;
 
-  std::string operator()(const std::unique_ptr<RootQuery>& expression) const;
-  std::string operator()(const std::unique_ptr<FunctionCall>& expression) const;
+  std::string operator()(const std::shared_ptr<RootQuery>& expression) const;
+  std::string operator()(const std::shared_ptr<FunctionCall>& expression) const;
 };
 
 } // namespace libjsonpath
