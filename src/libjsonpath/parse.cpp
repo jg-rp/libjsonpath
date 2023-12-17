@@ -77,7 +77,7 @@ segment_t Parser::parse_segment(TokenIterator& tokens) const {
     // have been caught by the lexer.
     assert(std::holds_alternative<Segment>(recursive_segment) &&
            "unexpected recursive segment");
-    return Segment{
+    return RecursiveSegment{
         segment_token,
         std::move(std::get<Segment>(recursive_segment).selectors),
     };

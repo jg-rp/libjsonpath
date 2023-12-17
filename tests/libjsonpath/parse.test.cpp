@@ -171,3 +171,5 @@ TEST_F(ParserTest, DoubleQuotedEscapedNameSelector) {
 TEST_F(ParserTest, DoubleQuotedSurrogatePairNameSelector) {
   expect_to_string("$[\"\\uD834\\uDD1E\"]", "$['𝄞']");
 }
+
+TEST_F(ParserTest, RecursiveIndex) { expect_to_string("$..[1]", "$..[1]"); }
