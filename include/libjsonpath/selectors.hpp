@@ -3,13 +3,45 @@
 
 #include "libjsonpath/tokens.hpp" // Token
 #include <cstdint>                // std::int64_t
-#include <memory>                 // std::shared_ptr
+#include <memory>                 // std::move std::unique_ptr
 #include <optional>               // std::optional
 #include <string>                 // std::string_view
 #include <variant>                // std::variant
 #include <vector>                 // std::vector
 
 namespace libjsonpath {
+
+template <typename T> class CompoundExpression {
+private:
+  std::unique_ptr<T> m_ptr;
+
+public:
+  CompoundExpression(T&& expr) : m_ptr(new T(std::move(expr))) {}
+  CompoundExpression(const T& expr) : m_ptr(new T(expr)) {}
+
+  CompoundExpression(const CompoundExpression& other)
+      : CompoundExpression(*other.m_ptr) {}
+
+  CompoundExpression(CompoundExpression&& other)
+      : CompoundExpression(std::move(*other.m_ptr)) {}
+
+  CompoundExpression& operator=(const CompoundExpression& other) {
+    *m_ptr = *other.m_ptr;
+    return *this;
+  }
+
+  CompoundExpression& operator=(CompoundExpression&& other) {
+    *m_ptr = std::move(*other.m_ptr);
+    return *this;
+  }
+
+  ~CompoundExpression() = default;
+
+  T& operator*() { return *m_ptr; }
+  const T& operator*() const { return *m_ptr; }
+  T* operator->() { return m_ptr.get(); }
+  const T* operator->() const { return m_ptr.get(); }
+};
 
 enum class BinaryOperator {
   none,
@@ -40,9 +72,9 @@ struct RootQuery;
 struct FunctionCall;
 
 using expression_t = std::variant<NullLiteral, BooleanLiteral, IntegerLiteral,
-    FloatLiteral, StringLiteral, std::shared_ptr<LogicalNotExpression>,
-    std::shared_ptr<InfixExpression>, std::shared_ptr<RelativeQuery>,
-    std::shared_ptr<RootQuery>, std::shared_ptr<FunctionCall>>;
+    FloatLiteral, StringLiteral, CompoundExpression<LogicalNotExpression>,
+    CompoundExpression<InfixExpression>, CompoundExpression<RelativeQuery>,
+    CompoundExpression<RootQuery>, CompoundExpression<FunctionCall>>;
 
 struct NullLiteral {
   Token token{};
@@ -125,7 +157,7 @@ struct FilterSelector {
 };
 
 using selector_t = std::variant<NameSelector, IndexSelector, WildSelector,
-    SliceSelector, std::shared_ptr<FilterSelector>>;
+    SliceSelector, CompoundExpression<FilterSelector>>;
 
 struct Segment {
   Token token;

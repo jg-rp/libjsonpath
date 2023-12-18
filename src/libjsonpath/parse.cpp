@@ -175,14 +175,13 @@ SliceSelector Parser::parse_slice_selector(TokenIterator& tokens) const {
   return selector;
 };
 
-std::shared_ptr<FilterSelector> Parser::parse_filter_selector(
-    TokenIterator& tokens) const {
+FilterSelector Parser::parse_filter_selector(TokenIterator& tokens) const {
   const auto filter_token{*tokens};
   tokens++;
-  return std::make_shared<FilterSelector>(FilterSelector{
+  return FilterSelector{
       filter_token,
       parse_filter_expression(tokens, PRECEDENCE_LOWEST),
-  });
+  };
 };
 
 NullLiteral Parser::parse_null_literal(TokenIterator& tokens) const {
@@ -208,17 +207,16 @@ FloatLiteral Parser::parse_float_literal(TokenIterator& tokens) const {
   return FloatLiteral{*tokens, token_to_double(*tokens)};
 };
 
-std::shared_ptr<LogicalNotExpression> Parser::parse_logical_not(
-    TokenIterator& tokens) const {
+expression_t Parser::parse_logical_not(TokenIterator& tokens) const {
   const auto token{*tokens};
   tokens++;
-  return std::make_shared<LogicalNotExpression>(LogicalNotExpression{
+  return CompoundExpression(LogicalNotExpression{
       token,
       parse_filter_expression(tokens, PRECEDENCE_PREFIX),
   });
 };
 
-std::shared_ptr<InfixExpression> Parser::parse_infix(
+expression_t Parser::parse_infix(
     TokenIterator& tokens, expression_t left) const {
   auto token{*tokens};
   tokens++;
@@ -233,7 +231,7 @@ std::shared_ptr<InfixExpression> Parser::parse_infix(
     throw_for_non_singular_query(right);
   }
 
-  return std::make_shared<InfixExpression>(InfixExpression{
+  return CompoundExpression(InfixExpression{
       token,
       std::move(left),  // pointer to left-hand expression
       op,               // binary operator
@@ -257,21 +255,19 @@ expression_t Parser::parse_grouped_expression(TokenIterator& tokens) const {
   return expr;
 }
 
-std::shared_ptr<RootQuery> Parser::parse_root_query(
-    TokenIterator& tokens) const {
+expression_t Parser::parse_root_query(TokenIterator& tokens) const {
   const auto token{*tokens};
   tokens++;
-  return std::make_shared<RootQuery>(RootQuery{
+  return CompoundExpression(RootQuery{
       token,
       parse_path(tokens, true),
   });
 };
 
-std::shared_ptr<RelativeQuery> Parser::parse_relative_query(
-    TokenIterator& tokens) const {
+expression_t Parser::parse_relative_query(TokenIterator& tokens) const {
   const auto token{*tokens};
   tokens++;
-  return std::make_shared<RelativeQuery>(RelativeQuery{
+  return CompoundExpression(RelativeQuery{
       token,
       parse_path(tokens, true),
   });
@@ -312,8 +308,7 @@ expression_t Parser::parse_filter_token(TokenIterator& tokens) const {
   }
 }
 
-std::shared_ptr<FunctionCall> Parser::parse_function_call(
-    TokenIterator& tokens) const {
+expression_t Parser::parse_function_call(TokenIterator& tokens) const {
   const auto token{*tokens};
   tokens++;
   std::vector<expression_t> args{};
@@ -341,7 +336,7 @@ std::shared_ptr<FunctionCall> Parser::parse_function_call(
 
   expect(tokens, TokenType::rparen);
 
-  return std::make_shared<FunctionCall>(FunctionCall{
+  return CompoundExpression(FunctionCall{
       token,
       token.value,
       std::move(args),
@@ -415,16 +410,16 @@ std::string Parser::decode_string_token(const Token& t) const {
 }
 
 void Parser::throw_for_non_singular_query(const expression_t& expr) const {
-  if (std::holds_alternative<std::shared_ptr<RootQuery>>(expr)) {
-    const auto& root_query{std::get<std::shared_ptr<RootQuery>>(expr)};
+  if (std::holds_alternative<CompoundExpression<RootQuery>>(expr)) {
+    const auto& root_query{std::get<CompoundExpression<RootQuery>>(expr)};
     if (!singular_query(root_query->query)) {
       throw SyntaxError(
           "non-singular query is not comparable", root_query->token);
     }
   }
 
-  if (std::holds_alternative<std::shared_ptr<RelativeQuery>>(expr)) {
-    auto& relative_query{std::get<std::shared_ptr<RelativeQuery>>(expr)};
+  if (std::holds_alternative<CompoundExpression<RelativeQuery>>(expr)) {
+    auto& relative_query{std::get<CompoundExpression<RelativeQuery>>(expr)};
     if (!singular_query(relative_query->query)) {
       throw SyntaxError(
           "non-singular query is not comparable", relative_query->token);

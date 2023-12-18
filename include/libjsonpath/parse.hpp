@@ -4,7 +4,6 @@
 #include "libjsonpath/selectors.hpp"
 #include "libjsonpath/tokens.hpp"
 #include <deque>         // std::deque
-#include <memory>        // std::shared_ptr std::make_shared
 #include <string>        // std::string
 #include <string_view>   // std::string_view
 #include <unordered_map> // std::unordered_map
@@ -67,9 +66,7 @@ protected:
   std::vector<selector_t> parse_bracketed_selection(
       TokenIterator& tokens) const;
 
-  std::shared_ptr<FilterSelector> parse_filter_selector(
-      TokenIterator& tokens) const;
-
+  FilterSelector parse_filter_selector(TokenIterator& tokens) const;
   SliceSelector parse_slice_selector(TokenIterator& tokens) const;
 
   NullLiteral parse_null_literal(TokenIterator& tokens) const;
@@ -78,20 +75,11 @@ protected:
   IntegerLiteral parse_integer_literal(TokenIterator& tokens) const;
   FloatLiteral parse_float_literal(TokenIterator& tokens) const;
 
-  std::shared_ptr<LogicalNotExpression> parse_logical_not(
-      TokenIterator& tokens) const;
-
-  std::shared_ptr<InfixExpression> parse_infix(
-      TokenIterator& tokens, expression_t left) const;
-
-  std::shared_ptr<RootQuery> parse_root_query(TokenIterator& tokens) const;
-
-  std::shared_ptr<RelativeQuery> parse_relative_query(
-      TokenIterator& tokens) const;
-
-  std::shared_ptr<FunctionCall> parse_function_call(
-      TokenIterator& tokens) const;
-
+  expression_t parse_logical_not(TokenIterator& tokens) const;
+  expression_t parse_infix(TokenIterator& tokens, expression_t left) const;
+  expression_t parse_root_query(TokenIterator& tokens) const;
+  expression_t parse_relative_query(TokenIterator& tokens) const;
+  expression_t parse_function_call(TokenIterator& tokens) const;
   expression_t parse_filter_token(TokenIterator& tokens) const;
   expression_t parse_grouped_expression(TokenIterator& tokens) const;
 
