@@ -90,5 +90,6 @@ std::string token_to_string(const Token& token) {
 
 std::ostream& operator<<(std::ostream& os, Token const& token) {
   return os << token_to_string(token);
-};
+}
+
 } // namespace libjsonpath

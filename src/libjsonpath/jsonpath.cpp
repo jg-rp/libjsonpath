@@ -32,23 +32,23 @@ std::string to_string(const segments_t& path) {
 std::string SelectorToStringVisitor::operator()(
     const NameSelector& selector) const {
   return "'"s + selector.name + "'"s;
-};
+}
 
 std::string SelectorToStringVisitor::operator()(
     const IndexSelector& selector) const {
   return std::to_string(selector.index);
-};
+}
 
 std::string SelectorToStringVisitor::operator()(const WildSelector&) const {
   return "*";
-};
+}
 
 std::string SelectorToStringVisitor::operator()(
     const SliceSelector& selector) const {
   return (selector.start ? std::to_string(selector.start.value()) : ""s) + ":" +
          (selector.stop ? std::to_string(selector.stop.value()) : ""s) + ":" +
          (selector.step ? std::to_string(selector.step.value()) : "1"s);
-};
+}
 
 std::string SelectorToStringVisitor::operator()(
     const CompoundExpression<FilterSelector>& selector) const {
@@ -64,7 +64,7 @@ std::string SegmentToStringVisitor::operator()(const Segment& segment) const {
   rv.erase(rv.end() - 2, rv.end()); // remove the trailing comma and space
   rv += "]";
   return rv;
-};
+}
 
 std::string SegmentToStringVisitor::operator()(
     const RecursiveSegment& segment) const {
@@ -76,21 +76,21 @@ std::string SegmentToStringVisitor::operator()(
   rv.erase(rv.end() - 2, rv.end()); // remove the trailing comma and space
   rv += "]";
   return rv;
-};
+}
 
 std::string ExpressionToStringVisitor::operator()(const NullLiteral&) const {
   return "null";
-};
+}
 
 std::string ExpressionToStringVisitor::operator()(
     const BooleanLiteral& expression) const {
   return expression.value ? "true" : "false";
-};
+}
 
 std::string ExpressionToStringVisitor::operator()(
     const IntegerLiteral& expression) const {
   return std::to_string(expression.value);
-};
+}
 
 std::string ExpressionToStringVisitor::operator()(
     const FloatLiteral& expression) const {
@@ -99,17 +99,17 @@ std::string ExpressionToStringVisitor::operator()(
   rv.erase(rv.find_last_not_of('0') + 1, std::string::npos);
   rv.erase(rv.find_last_not_of('.') + 1, std::string::npos);
   return rv;
-};
+}
 
 std::string ExpressionToStringVisitor::operator()(
     const StringLiteral& expression) const {
   return "\""s + expression.value + "\"";
-};
+}
 
 std::string ExpressionToStringVisitor::operator()(
     const CompoundExpression<LogicalNotExpression>& expression) const {
   return "!" + std::visit(ExpressionToStringVisitor(), expression->right);
-};
+}
 
 static std::string binary_operator_to_string(BinaryOperator op) {
   switch (op) {
@@ -145,19 +145,19 @@ std::string ExpressionToStringVisitor::operator()(
   return std::visit(ExpressionToStringVisitor(), expression->left) + " " +
          binary_operator_to_string(expression->op) + " " +
          std::visit(ExpressionToStringVisitor(), expression->right);
-};
+}
 
 std::string ExpressionToStringVisitor::operator()(
     const CompoundExpression<RelativeQuery>& expression) const {
   auto path_string{to_string(expression->query)};
   path_string[0] = '@';
   return path_string;
-};
+}
 
 std::string ExpressionToStringVisitor::operator()(
     const CompoundExpression<RootQuery>& expression) const {
   return to_string(expression->query);
-};
+}
 
 std::string ExpressionToStringVisitor::operator()(
     const CompoundExpression<FunctionCall>& expression) const {
@@ -170,6 +170,6 @@ std::string ExpressionToStringVisitor::operator()(
   rv.erase(rv.end() - 2, rv.end()); // remove the trailing comma and space
   rv.push_back(')');
   return rv;
-};
+}
 
 } // namespace libjsonpath

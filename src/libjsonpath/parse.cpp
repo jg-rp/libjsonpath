@@ -29,7 +29,7 @@ segments_t Parser::parse(const Tokens& tokens) const {
   }
 
   return segments;
-};
+}
 
 segments_t Parser::parse_path(TokenIterator& tokens) const {
   segments_t segments{};
@@ -51,7 +51,7 @@ segments_t Parser::parse_path(TokenIterator& tokens) const {
   }
 
   return segments;
-};
+}
 
 segments_t Parser::parse_filter_path(TokenIterator& tokens) const {
   segments_t segments{};
@@ -74,7 +74,7 @@ segments_t Parser::parse_filter_path(TokenIterator& tokens) const {
   }
 
   return segments;
-};
+}
 
 segment_t Parser::parse_segment(TokenIterator& tokens) const {
   Token segment_token{*tokens};
@@ -164,7 +164,7 @@ std::vector<selector_t> Parser::parse_bracketed_selection(
   }
 
   return items;
-};
+}
 
 SliceSelector Parser::parse_slice_selector(TokenIterator& tokens) const {
   SliceSelector selector{*tokens, std::nullopt, std::nullopt, std::nullopt};
@@ -204,30 +204,30 @@ FilterSelector Parser::parse_filter_selector(TokenIterator& tokens) const {
       filter_token,
       parse_filter_expression(tokens, PRECEDENCE_LOWEST),
   };
-};
+}
 
 NullLiteral Parser::parse_null_literal(TokenIterator& tokens) const {
   return NullLiteral{*tokens};
-};
+}
 
 BooleanLiteral Parser::parse_boolean_literal(TokenIterator& tokens) const {
   if (tokens->type == TokenType::false_) {
     return BooleanLiteral{*tokens, false};
   }
   return BooleanLiteral{*tokens, true};
-};
+}
 
 StringLiteral Parser::parse_string_literal(TokenIterator& tokens) const {
   return StringLiteral{*tokens, decode_string_token(*tokens)};
-};
+}
 
 IntegerLiteral Parser::parse_integer_literal(TokenIterator& tokens) const {
   return IntegerLiteral{*tokens, token_to_int(*tokens)};
-};
+}
 
 FloatLiteral Parser::parse_float_literal(TokenIterator& tokens) const {
   return FloatLiteral{*tokens, token_to_double(*tokens)};
-};
+}
 
 expression_t Parser::parse_logical_not(TokenIterator& tokens) const {
   const auto token{*tokens};
@@ -236,7 +236,7 @@ expression_t Parser::parse_logical_not(TokenIterator& tokens) const {
       token,
       parse_filter_expression(tokens, PRECEDENCE_PREFIX),
   });
-};
+}
 
 expression_t Parser::parse_infix(
     TokenIterator& tokens, expression_t left) const {
@@ -259,7 +259,7 @@ expression_t Parser::parse_infix(
       op,               // binary operator
       std::move(right), // pointer to right-hand expression
   });
-};
+}
 
 expression_t Parser::parse_grouped_expression(TokenIterator& tokens) const {
   tokens++;
@@ -284,7 +284,7 @@ expression_t Parser::parse_root_query(TokenIterator& tokens) const {
       token,
       parse_filter_path(tokens),
   });
-};
+}
 
 expression_t Parser::parse_relative_query(TokenIterator& tokens) const {
   const auto token{*tokens};
@@ -293,7 +293,7 @@ expression_t Parser::parse_relative_query(TokenIterator& tokens) const {
       token,
       parse_filter_path(tokens),
   });
-};
+}
 
 expression_t Parser::parse_filter_token(TokenIterator& tokens) const {
   switch (tokens->type) {
@@ -367,7 +367,7 @@ expression_t Parser::parse_function_call(TokenIterator& tokens) const {
       token.value,
       std::move(args),
   });
-};
+}
 
 expression_t Parser::parse_filter_expression(
     TokenIterator& tokens, int precedence) const {
@@ -390,7 +390,7 @@ expression_t Parser::parse_filter_expression(
   }
 
   return node;
-};
+}
 
 void Parser::expect(TokenIterator it, TokenType tt) const {
   if (it->type != tt) {

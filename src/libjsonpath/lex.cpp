@@ -443,7 +443,7 @@ void Lexer::run() {
       return;
     }
   }
-};
+}
 
 void Lexer::emit(TokenType t) {
   std::string_view view{m_query};
@@ -451,7 +451,7 @@ void Lexer::emit(TokenType t) {
   view.remove_suffix(m_length - m_pos);
   m_tokens.push_back(Token{t, view, m_start, m_query});
   m_start = m_pos;
-};
+}
 
 std::optional<char> Lexer::next() {
   if (m_pos >= m_length) {
@@ -459,7 +459,7 @@ std::optional<char> Lexer::next() {
   }
 
   return std::optional<char>(std::in_place, m_query[m_pos++]);
-};
+}
 
 std::string_view Lexer::view() const {
   std::string_view view_{m_query};
