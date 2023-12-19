@@ -20,7 +20,7 @@ segments_t Parser::parse(const Tokens& tokens) const {
     it++;
   }
 
-  auto segments{parse_path(it, false)};
+  auto segments{parse_path(it)};
 
   if (it->type != TokenType::eof_) {
     throw SyntaxError(
@@ -31,18 +31,40 @@ segments_t Parser::parse(const Tokens& tokens) const {
   return segments;
 };
 
-segments_t Parser::parse_path(TokenIterator& tokens, bool in_filter) const {
+segments_t Parser::parse_path(TokenIterator& tokens) const {
   segments_t segments{};
   segment_t maybe_segment;
 
   while (true) {
     maybe_segment = parse_segment(tokens);
     if (std::holds_alternative<std::monostate>(maybe_segment)) {
-      if (in_filter) {
-        tokens--;
-      }
       break;
-    } else if (std::holds_alternative<Segment>(maybe_segment)) {
+    }
+
+    if (std::holds_alternative<Segment>(maybe_segment)) {
+      segments.push_back(std::move(std::get<Segment>(maybe_segment)));
+    } else if (std::holds_alternative<RecursiveSegment>(maybe_segment)) {
+      segments.push_back(std::move(std::get<RecursiveSegment>(maybe_segment)));
+    }
+
+    tokens++;
+  }
+
+  return segments;
+};
+
+segments_t Parser::parse_filter_path(TokenIterator& tokens) const {
+  segments_t segments{};
+  segment_t maybe_segment;
+
+  while (true) {
+    maybe_segment = parse_segment(tokens);
+    if (std::holds_alternative<std::monostate>(maybe_segment)) {
+      tokens--;
+      break;
+    }
+
+    if (std::holds_alternative<Segment>(maybe_segment)) {
       segments.push_back(std::move(std::get<Segment>(maybe_segment)));
     } else if (std::holds_alternative<RecursiveSegment>(maybe_segment)) {
       segments.push_back(std::move(std::get<RecursiveSegment>(maybe_segment)));
@@ -173,7 +195,7 @@ SliceSelector Parser::parse_slice_selector(TokenIterator& tokens) const {
 
   tokens--;
   return selector;
-};
+}
 
 FilterSelector Parser::parse_filter_selector(TokenIterator& tokens) const {
   const auto filter_token{*tokens};
@@ -260,7 +282,7 @@ expression_t Parser::parse_root_query(TokenIterator& tokens) const {
   tokens++;
   return CompoundExpression(RootQuery{
       token,
-      parse_path(tokens, true),
+      parse_filter_path(tokens),
   });
 };
 
@@ -269,7 +291,7 @@ expression_t Parser::parse_relative_query(TokenIterator& tokens) const {
   tokens++;
   return CompoundExpression(RelativeQuery{
       token,
-      parse_path(tokens, true),
+      parse_filter_path(tokens),
   });
 };
 
@@ -304,7 +326,9 @@ expression_t Parser::parse_filter_token(TokenIterator& tokens) const {
     throw SyntaxError(
         "unexpected end of filter expression, found eof", *tokens);
   default:
-    throw SyntaxError("unexpected end of filter expression", *tokens);
+    throw SyntaxError("unexpected filter expression token " +
+                          token_type_to_string(tokens->type),
+        *tokens);
   }
 }
 
@@ -316,7 +340,7 @@ expression_t Parser::parse_function_call(TokenIterator& tokens) const {
   while (tokens->type != TokenType::rparen) {
     expression_t node{parse_filter_token(tokens)};
 
-    // Is this function call part of a comparison or logical expression?
+    // Is this argument part of a comparison or logical expression?
     while (BINARY_OPERATORS.find(std::next(tokens)->type) !=
            BINARY_OPERATORS.end()) {
       tokens++;
@@ -332,6 +356,8 @@ expression_t Parser::parse_function_call(TokenIterator& tokens) const {
       expect_peek(tokens, TokenType::comma);
       tokens++; // move past comma
     }
+
+    tokens++;
   }
 
   expect(tokens, TokenType::rparen);

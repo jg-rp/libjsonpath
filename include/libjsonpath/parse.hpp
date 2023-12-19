@@ -60,7 +60,8 @@ public:
   segments_t parse(const Tokens& tokens) const;
 
 protected:
-  segments_t parse_path(TokenIterator& tokens, bool in_filter) const;
+  segments_t parse_path(TokenIterator& tokens) const;
+  segments_t parse_filter_path(TokenIterator& tokens) const;
   segment_t parse_segment(TokenIterator& tokens) const;
 
   std::vector<selector_t> parse_bracketed_selection(

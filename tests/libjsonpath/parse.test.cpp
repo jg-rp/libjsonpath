@@ -173,3 +173,7 @@ TEST_F(ParserTest, DoubleQuotedSurrogatePairNameSelector) {
 }
 
 TEST_F(ParserTest, RecursiveIndex) { expect_to_string("$..[1]", "$..[1]"); }
+
+TEST_F(ParserTest, FilterFunctionComparison) {
+  expect_to_string("$[?count(@..*)>2]", "$[?count(@..[*]) > 2]");
+}

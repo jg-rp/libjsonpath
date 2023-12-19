@@ -41,6 +41,22 @@ else()
 endif()
 
 
+# XXX: dev
+add_executable(dev dev.cpp
+  src/libjsonpath/lex.cpp
+  src/libjsonpath/tokens.cpp
+  src/libjsonpath/parse.cpp
+  src/libjsonpath/jsonpath.cpp
+  src/libjsonpath/utils.cpp
+)
+
+target_link_libraries(dev PUBLIC libjsonpath_compiler_flags)
+
+target_include_directories(dev PUBLIC 
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>  
+)
+
 
 # libjsonpath
 add_library(jsonpath
