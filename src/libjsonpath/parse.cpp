@@ -473,9 +473,14 @@ std::int64_t Parser::token_to_int(const Token& t) const {
   }
 
   std::int64_t number{};
+
   auto from_char_result =
       std::from_chars(t.value.data(), t.value.data() + t.value.size(), number);
-  assert(from_char_result.ec == std::errc{});
+
+  if (!(from_char_result.ec == std::errc{})) {
+    throw Exception("failed to convert token to int", t);
+  }
+
   return number;
 }
 
