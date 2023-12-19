@@ -177,3 +177,15 @@ TEST_F(ParserTest, RecursiveIndex) { expect_to_string("$..[1]", "$..[1]"); }
 TEST_F(ParserTest, FilterFunctionComparison) {
   expect_to_string("$[?count(@..*)>2]", "$[?count(@..[*]) > 2]");
 }
+
+TEST_F(ParserTest, IntegerLiteralWithExponent) {
+  expect_to_string("$[?@.a==1e2]", "$[?@['a'] == 100]");
+}
+
+TEST_F(ParserTest, IntegerLiteralWithPositiveExponent) {
+  expect_to_string("$[?@.a==1e+2]", "$[?@['a'] == 100]");
+}
+
+TEST_F(ParserTest, IntegerLiteralWithNegativeExponent) {
+  expect_to_string("$[?@.a==1e-2]", "$[?@['a'] == 0.01]");
+}

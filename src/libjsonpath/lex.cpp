@@ -7,7 +7,7 @@ namespace libjsonpath {
 using namespace std::string_literals;
 
 Lexer::Lexer(std::string_view query)
-    : m_query{query}, m_length{query.length()} {};
+    : m_query{query}, m_length{query.length()} {}
 
 Lexer::State Lexer::lex_root() {
   const auto c{next()};
@@ -293,7 +293,17 @@ Lexer::State Lexer::lex_inside_filter() {
 
       // Exponent?
       if (accept('e')) {
-        accept(s_sign);
+        if (accept('-')) {
+          // Emit a float if we have a negative exponent.
+          if (!(accept(s_digits))) {
+            error("at least one exponent digit is required");
+            return ERROR;
+          }
+          emit(TokenType::float_);
+          continue;
+        }
+
+        accept('+');
         if (!(accept(s_digits))) {
           error("at least one exponent digit is required");
           return ERROR;
@@ -330,7 +340,17 @@ Lexer::State Lexer::lex_inside_filter() {
 
         // Exponent?
         if (accept('e')) {
-          accept(s_sign);
+          if (accept('-')) {
+            // Emit a float if we have a negative exponent.
+            if (!(accept(s_digits))) {
+              error("at least one exponent digit is required");
+              return ERROR;
+            }
+            emit(TokenType::float_);
+            continue;
+          }
+
+          accept('+');
           if (!(accept(s_digits))) {
             error("at least one exponent digit is required");
             return ERROR;

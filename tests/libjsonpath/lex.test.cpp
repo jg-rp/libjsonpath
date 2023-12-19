@@ -474,4 +474,32 @@ TEST_F(LexerTest, NameWithMultiByteChar) {
                        });
 }
 
+TEST_F(LexerTest, IntegerLiteralWithExponent) {
+  expect_tokens("$[?@.a==1e2]", {
+                                    {tt::root, "$", 0, "$[?@.a==1e2]"},
+                                    {tt::lbracket, "[", 1, "$[?@.a==1e2]"},
+                                    {tt::filter, "?", 2, "$[?@.a==1e2]"},
+                                    {tt::current, "@", 3, "$[?@.a==1e2]"},
+                                    {tt::name, "a", 5, "$[?@.a==1e2]"},
+                                    {tt::eq, "==", 6, "$[?@.a==1e2]"},
+                                    {tt::int_, "1e2", 8, "$[?@.a==1e2]"},
+                                    {tt::rbracket, "]", 11, "$[?@.a==1e2]"},
+                                    {tt::eof_, "", 12, "$[?@.a==1e2]"},
+                                });
+}
+
+TEST_F(LexerTest, IntegerLiteralWithNegativeExponent) {
+  expect_tokens("$[?@.a==1e-2]", {
+                                     {tt::root, "$", 0, "$[?@.a==1e-2]"},
+                                     {tt::lbracket, "[", 1, "$[?@.a==1e-2]"},
+                                     {tt::filter, "?", 2, "$[?@.a==1e-2]"},
+                                     {tt::current, "@", 3, "$[?@.a==1e-2]"},
+                                     {tt::name, "a", 5, "$[?@.a==1e-2]"},
+                                     {tt::eq, "==", 6, "$[?@.a==1e-2]"},
+                                     {tt::float_, "1e-2", 8, "$[?@.a==1e-2]"},
+                                     {tt::rbracket, "]", 12, "$[?@.a==1e-2]"},
+                                     {tt::eof_, "", 13, "$[?@.a==1e-2]"},
+                                 });
+}
+
 // TODO: test escape sequences inside string literals

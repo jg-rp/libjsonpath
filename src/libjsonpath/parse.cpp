@@ -2,9 +2,11 @@
 #include "libjsonpath/exceptions.hpp"
 #include "libjsonpath/utils.hpp" // libjsonpath::singular_query
 #include <cassert>
-#include <charconv>     // std::from_chars
 #include <cstdint>      // std::int32_t std::int64_t
 #include <cstdlib>      // std::strtod
+#include <limits>       // std::numeric_limits
+#include <sstream>      // std::istringstream
+#include <string>       // std::string
 #include <system_error> // std::errc
 #include <utility>      // std::move
 #include <variant>      // std::holds_alternative std::get
@@ -472,16 +474,24 @@ std::int64_t Parser::token_to_int(const Token& t) const {
     }
   }
 
-  std::int64_t number{};
+  // Handle integer literals in scientific notation by converting to a double
+  // then cast to an integer.
+  std::string null_terminated_str(t.value);
+  std::istringstream iss(null_terminated_str);
+  std::int64_t result;
+  double double_result;
+  iss >> double_result;
 
-  auto from_char_result =
-      std::from_chars(t.value.data(), t.value.data() + t.value.size(), number);
-
-  if (!(from_char_result.ec == std::errc{})) {
-    throw Exception("failed to convert token to int", t);
+  // Check if double_result is within the range of int
+  if (double_result >= std::numeric_limits<std::int64_t>::min() &&
+      double_result <= std::numeric_limits<std::int64_t>::max()) {
+    result = static_cast<int64_t>(double_result);
+  } else {
+    throw Exception(
+        "integer conversion failed for '"s + null_terminated_str + "'"s, t);
   }
 
-  return number;
+  return result;
 }
 
 double Parser::token_to_double(const Token& t) const {
