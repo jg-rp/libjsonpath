@@ -33,7 +33,7 @@ struct SelectorToStringVisitor {
   std::string operator()(const SliceSelector& selector) const;
 
   std::string operator()(
-      const CompoundExpression<FilterSelector>& selector) const;
+      const Box<FilterSelector>& selector) const;
 };
 
 // A _segments_t_ visitor returning a string representation of each segment in
@@ -54,17 +54,17 @@ struct ExpressionToStringVisitor {
   std::string operator()(const StringLiteral& expression) const;
 
   std::string operator()(
-      const CompoundExpression<LogicalNotExpression>& expression) const;
+      const Box<LogicalNotExpression>& expression) const;
 
   std::string operator()(
-      const CompoundExpression<InfixExpression>& expression) const;
+      const Box<InfixExpression>& expression) const;
 
   std::string operator()(
-      const CompoundExpression<RelativeQuery>& expression) const;
+      const Box<RelativeQuery>& expression) const;
 
-  std::string operator()(const CompoundExpression<RootQuery>& expression) const;
+  std::string operator()(const Box<RootQuery>& expression) const;
   std::string operator()(
-      const CompoundExpression<FunctionCall>& expression) const;
+      const Box<FunctionCall>& expression) const;
 };
 
 } // namespace libjsonpath

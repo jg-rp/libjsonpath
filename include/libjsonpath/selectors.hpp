@@ -11,31 +11,32 @@
 
 namespace libjsonpath {
 
-template <typename T> class CompoundExpression {
+// A wrapper around std::unique_ptr that helps us manage our recursive data
+// structure. Thanks go to a post by Jonathan for explaining this approach.
+// See https://www.foonathan.net/2022/05/recursive-variant-box/.
+template <typename T> class Box {
 private:
   std::unique_ptr<T> m_ptr;
 
 public:
-  CompoundExpression(T&& expr) : m_ptr(new T(std::move(expr))) {}
-  CompoundExpression(const T& expr) : m_ptr(new T(expr)) {}
+  Box(T&& expr) : m_ptr(new T(std::move(expr))) {}
+  Box(const T& expr) : m_ptr(new T(expr)) {}
 
-  CompoundExpression(const CompoundExpression& other)
-      : CompoundExpression(*other.m_ptr) {}
+  Box(const Box& other) : Box(*other.m_ptr) {}
 
-  CompoundExpression(CompoundExpression&& other)
-      : CompoundExpression(std::move(*other.m_ptr)) {}
+  Box(Box&& other) : Box(std::move(*other.m_ptr)) {}
 
-  CompoundExpression& operator=(const CompoundExpression& other) {
+  Box& operator=(const Box& other) {
     *m_ptr = *other.m_ptr;
     return *this;
   }
 
-  CompoundExpression& operator=(CompoundExpression&& other) {
+  Box& operator=(Box&& other) {
     *m_ptr = std::move(*other.m_ptr);
     return *this;
   }
 
-  ~CompoundExpression() = default;
+  ~Box() = default;
 
   T& operator*() { return *m_ptr; }
   const T& operator*() const { return *m_ptr; }
@@ -71,10 +72,10 @@ struct RelativeQuery;
 struct RootQuery;
 struct FunctionCall;
 
-using expression_t = std::variant<NullLiteral, BooleanLiteral, IntegerLiteral,
-    FloatLiteral, StringLiteral, CompoundExpression<LogicalNotExpression>,
-    CompoundExpression<InfixExpression>, CompoundExpression<RelativeQuery>,
-    CompoundExpression<RootQuery>, CompoundExpression<FunctionCall>>;
+using expression_t =
+    std::variant<NullLiteral, BooleanLiteral, IntegerLiteral, FloatLiteral,
+        StringLiteral, Box<LogicalNotExpression>, Box<InfixExpression>,
+        Box<RelativeQuery>, Box<RootQuery>, Box<FunctionCall>>;
 
 struct NullLiteral {
   Token token{};
@@ -157,7 +158,7 @@ struct FilterSelector {
 };
 
 using selector_t = std::variant<NameSelector, IndexSelector, WildSelector,
-    SliceSelector, CompoundExpression<FilterSelector>>;
+    SliceSelector, Box<FilterSelector>>;
 
 struct Segment {
   Token token;

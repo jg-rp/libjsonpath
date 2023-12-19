@@ -51,7 +51,7 @@ std::string SelectorToStringVisitor::operator()(
 }
 
 std::string SelectorToStringVisitor::operator()(
-    const CompoundExpression<FilterSelector>& selector) const {
+    const Box<FilterSelector>& selector) const {
   return "?" + std::visit(ExpressionToStringVisitor(), selector->expression);
 }
 
@@ -107,7 +107,7 @@ std::string ExpressionToStringVisitor::operator()(
 }
 
 std::string ExpressionToStringVisitor::operator()(
-    const CompoundExpression<LogicalNotExpression>& expression) const {
+    const Box<LogicalNotExpression>& expression) const {
   return "!" + std::visit(ExpressionToStringVisitor(), expression->right);
 }
 
@@ -135,7 +135,7 @@ static std::string binary_operator_to_string(BinaryOperator op) {
 }
 
 std::string ExpressionToStringVisitor::operator()(
-    const CompoundExpression<InfixExpression>& expression) const {
+    const Box<InfixExpression>& expression) const {
   if (expression->op == BinaryOperator::logical_and ||
       expression->op == BinaryOperator::logical_or) {
     return "("s + std::visit(ExpressionToStringVisitor(), expression->left) +
@@ -148,19 +148,19 @@ std::string ExpressionToStringVisitor::operator()(
 }
 
 std::string ExpressionToStringVisitor::operator()(
-    const CompoundExpression<RelativeQuery>& expression) const {
+    const Box<RelativeQuery>& expression) const {
   auto path_string{to_string(expression->query)};
   path_string[0] = '@';
   return path_string;
 }
 
 std::string ExpressionToStringVisitor::operator()(
-    const CompoundExpression<RootQuery>& expression) const {
+    const Box<RootQuery>& expression) const {
   return to_string(expression->query);
 }
 
 std::string ExpressionToStringVisitor::operator()(
-    const CompoundExpression<FunctionCall>& expression) const {
+    const Box<FunctionCall>& expression) const {
   std::string rv{expression->name};
   rv.push_back('(');
   for (const auto& arg : expression->args) {

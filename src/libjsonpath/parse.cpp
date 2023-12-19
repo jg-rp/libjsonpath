@@ -234,7 +234,7 @@ FloatLiteral Parser::parse_float_literal(TokenIterator& tokens) const {
 expression_t Parser::parse_logical_not(TokenIterator& tokens) const {
   const auto token{*tokens};
   tokens++;
-  return CompoundExpression(LogicalNotExpression{
+  return Box(LogicalNotExpression{
       token,
       parse_filter_expression(tokens, PRECEDENCE_PREFIX),
   });
@@ -255,7 +255,7 @@ expression_t Parser::parse_infix(
     throw_for_non_singular_query(right);
   }
 
-  return CompoundExpression(InfixExpression{
+  return Box(InfixExpression{
       token,
       std::move(left),  // pointer to left-hand expression
       op,               // binary operator
@@ -282,7 +282,7 @@ expression_t Parser::parse_grouped_expression(TokenIterator& tokens) const {
 expression_t Parser::parse_root_query(TokenIterator& tokens) const {
   const auto token{*tokens};
   tokens++;
-  return CompoundExpression(RootQuery{
+  return Box(RootQuery{
       token,
       parse_filter_path(tokens),
   });
@@ -291,7 +291,7 @@ expression_t Parser::parse_root_query(TokenIterator& tokens) const {
 expression_t Parser::parse_relative_query(TokenIterator& tokens) const {
   const auto token{*tokens};
   tokens++;
-  return CompoundExpression(RelativeQuery{
+  return Box(RelativeQuery{
       token,
       parse_filter_path(tokens),
   });
@@ -364,7 +364,7 @@ expression_t Parser::parse_function_call(TokenIterator& tokens) const {
 
   expect(tokens, TokenType::rparen);
 
-  return CompoundExpression(FunctionCall{
+  return Box(FunctionCall{
       token,
       token.value,
       std::move(args),
@@ -438,16 +438,16 @@ std::string Parser::decode_string_token(const Token& t) const {
 }
 
 void Parser::throw_for_non_singular_query(const expression_t& expr) const {
-  if (std::holds_alternative<CompoundExpression<RootQuery>>(expr)) {
-    const auto& root_query{std::get<CompoundExpression<RootQuery>>(expr)};
+  if (std::holds_alternative<Box<RootQuery>>(expr)) {
+    const auto& root_query{std::get<Box<RootQuery>>(expr)};
     if (!singular_query(root_query->query)) {
       throw SyntaxError(
           "non-singular query is not comparable", root_query->token);
     }
   }
 
-  if (std::holds_alternative<CompoundExpression<RelativeQuery>>(expr)) {
-    auto& relative_query{std::get<CompoundExpression<RelativeQuery>>(expr)};
+  if (std::holds_alternative<Box<RelativeQuery>>(expr)) {
+    auto& relative_query{std::get<Box<RelativeQuery>>(expr)};
     if (!singular_query(relative_query->query)) {
       throw SyntaxError(
           "non-singular query is not comparable", relative_query->token);
