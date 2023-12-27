@@ -49,17 +49,47 @@ const std::unordered_map<TokenType, BinaryOperator> BINARY_OPERATORS{
     {TokenType::or_, BinaryOperator::logical_or},
 };
 
+// Possible types that a JSONPath function extension can accept as
+// arguments or return as its result.
+enum class ExpressionType {
+  value,
+  logical,
+  nodes,
+};
+
+// The argument and result types for a JSONPath function extension.
+struct FunctionExtension {
+  std::vector<ExpressionType> args;
+  ExpressionType res;
+};
+
+const std::unordered_map<std::string, FunctionExtension>
+    DEFAULT_FUNCTION_EXTENSIONS{
+        {"count", {{ExpressionType::nodes}, ExpressionType::value}},
+        {"length", {{ExpressionType::value}, ExpressionType::value}},
+        {"match", {{ExpressionType::value, ExpressionType::value},
+                      ExpressionType::logical}},
+        {"search", {{ExpressionType::value, ExpressionType::value},
+                       ExpressionType::logical}},
+        {"value", {{ExpressionType::nodes}, ExpressionType::value}},
+    };
+
 // The JSONPath query expression parser.
 //
 // An instance of _libjsonpath::Parser_ does not maintain any state, so
 // repeated calls to _Parser.parse()_ are OK and, in fact, encouraged.
 class Parser {
 public:
+  Parser() : m_function_extensions{DEFAULT_FUNCTION_EXTENSIONS} {};
+  Parser(std::unordered_map<std::string, FunctionExtension> function_extensions)
+      : m_function_extensions{function_extensions} {}
+
   // Parse tokens from _tokens_ and return a sequence of segments making up
   // the JSONPath.
   segments_t parse(const Tokens& tokens) const;
 
 protected:
+  std::unordered_map<std::string, FunctionExtension> m_function_extensions;
   segments_t parse_path(TokenIterator& tokens) const;
   segments_t parse_filter_path(TokenIterator& tokens) const;
   segment_t parse_segment(TokenIterator& tokens) const;
@@ -131,6 +161,15 @@ private:
 
   // Return the unicode code point _code_point_ encoded in UTF-8.
   std::string encode_utf8(std::int32_t code_point, const Token& token) const;
+
+  // Return the result type for the function extension named _name_.
+  // Throws a TypeError if _name_ does not exist in function_extensions.
+  ExpressionType function_result_type(std::string name, const Token& t) const;
+
+  // Throw a Syntax error if _args_ are not valid for the function extension
+  // named by token _t_.
+  void throw_for_function_signature(
+      const Token& t, const std::vector<expression_t>& args) const;
 };
 
 } // namespace libjsonpath

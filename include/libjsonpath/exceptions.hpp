@@ -54,6 +54,14 @@ public:
   SyntaxError(std::string_view message, const Token& token)
       : Exception{message, token} {};
 };
+
+// An exception thrown due to invalid JSONPath query syntax.
+class TypeError : public Exception {
+public:
+  TypeError(std::string_view message, const Token& token)
+      : Exception{message, token} {};
+};
+
 } // namespace libjsonpath
 
 #endif // LIBJSONPATH_EXCEPTIONS_H

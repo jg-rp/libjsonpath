@@ -132,6 +132,29 @@ target_link_libraries(
   GTest::gtest_main
 )
 
+# Function well-typedness tests
+add_executable(
+  well_typedness_tests
+  tests/libjsonpath/well_typedness.test.cpp
+  src/libjsonpath/jsonpath.cpp
+  src/libjsonpath/tokens.cpp
+  src/libjsonpath/lex.cpp
+  src/libjsonpath/parse.cpp
+  src/libjsonpath/utils.cpp
+)
+
+
+target_include_directories(well_typedness_tests PUBLIC 
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+)
+
+target_link_libraries(
+  well_typedness_tests
+  libjsonpath_compiler_flags
+  GTest::gtest_main
+)
+
 # Error tests
 add_executable(
   error_tests

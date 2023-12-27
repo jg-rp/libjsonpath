@@ -2,6 +2,7 @@
 #define LIBJSONPATH_JSONPATH_H
 
 #include "libjsonpath/config.hpp"
+#include "libjsonpath/parse.hpp"
 #include "libjsonpath/selectors.hpp"
 #include <string>
 #include <string_view>
@@ -18,6 +19,8 @@ inline constexpr std::string_view VERSION{LIBJSONPATH_VERSION};
 // See libjsonpath::selectors.hpp for segment, selector and filter expression
 // node definitions.
 segments_t parse(std::string_view s);
+segments_t parse(std::string_view s,
+    std::unordered_map<std::string, FunctionExtension> function_extensions);
 
 // Return a canonical string representation of a sequence of JSONPath segments.
 std::string to_string(const segments_t& path);
@@ -32,8 +35,7 @@ struct SelectorToStringVisitor {
   std::string operator()(const WildSelector&) const;
   std::string operator()(const SliceSelector& selector) const;
 
-  std::string operator()(
-      const Box<FilterSelector>& selector) const;
+  std::string operator()(const Box<FilterSelector>& selector) const;
 };
 
 // A _segments_t_ visitor returning a string representation of each segment in
@@ -53,18 +55,14 @@ struct ExpressionToStringVisitor {
   std::string operator()(const FloatLiteral& expression) const;
   std::string operator()(const StringLiteral& expression) const;
 
-  std::string operator()(
-      const Box<LogicalNotExpression>& expression) const;
+  std::string operator()(const Box<LogicalNotExpression>& expression) const;
 
-  std::string operator()(
-      const Box<InfixExpression>& expression) const;
+  std::string operator()(const Box<InfixExpression>& expression) const;
 
-  std::string operator()(
-      const Box<RelativeQuery>& expression) const;
+  std::string operator()(const Box<RelativeQuery>& expression) const;
 
   std::string operator()(const Box<RootQuery>& expression) const;
-  std::string operator()(
-      const Box<FunctionCall>& expression) const;
+  std::string operator()(const Box<FunctionCall>& expression) const;
 };
 
 } // namespace libjsonpath

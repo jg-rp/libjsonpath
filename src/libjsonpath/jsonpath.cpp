@@ -21,6 +21,18 @@ segments_t parse(std::string_view s) {
   return parser.parse(tokens);
 }
 
+segments_t parse(std::string_view s,
+    std::unordered_map<std::string, FunctionExtension> function_extensions) {
+  Lexer lexer{s};
+  lexer.run();
+  auto tokens{lexer.tokens()};
+  if (tokens.size() && tokens.back().type == TokenType::error) {
+    throw SyntaxError(tokens.back().value, tokens.back());
+  }
+  Parser parser{function_extensions};
+  return parser.parse(tokens);
+}
+
 std::string to_string(const segments_t& path) {
   std::string rv{"$"};
   for (const auto& segment : path) {

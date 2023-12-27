@@ -363,6 +363,7 @@ expression_t Parser::parse_function_call(TokenIterator& tokens) const {
   }
 
   expect(tokens, TokenType::rparen);
+  throw_for_function_signature(token, args);
 
   return Box(FunctionCall{
       token,
@@ -697,6 +698,136 @@ std::string Parser::encode_utf8(
   }
 
   return rv;
+}
+
+ExpressionType Parser::function_result_type(
+    std::string name, const Token& t) const {
+  auto it{m_function_extensions.find(name)};
+  if (it == m_function_extensions.end()) {
+    throw SyntaxError("no such function '"s + name + "'"s, t);
+  }
+  return it->second.res;
+}
+
+struct ValueTypeVisitor {
+  const Token& m_token;
+  const size_t m_index;
+  const std::unordered_map<std::string, FunctionExtension>&
+      m_function_extensions;
+
+  ValueTypeVisitor(const Token& t, size_t index,
+      const std::unordered_map<std::string, FunctionExtension>&
+          function_extensions)
+      : m_token{t}, m_index{index}, m_function_extensions{function_extensions} {
+  }
+
+  void operator()(const NullLiteral&) const {};
+
+  void operator()(const BooleanLiteral&) const {};
+  void operator()(const IntegerLiteral&) const {};
+  void operator()(const FloatLiteral&) const {};
+  void operator()(const StringLiteral&) const {};
+
+  void operator()(const Box<LogicalNotExpression>&) const {
+    throw TypeError(std::string{m_token.value} + "() argument " +
+                        std::to_string(m_index) + " must be of ValueType",
+        m_token);
+  };
+
+  void operator()(const Box<InfixExpression>&) const {
+    throw TypeError(std::string{m_token.value} + "() argument " +
+                        std::to_string(m_index) + " must be of ValueType",
+        m_token);
+  };
+
+  void operator()(const Box<RelativeQuery>& expression) const {
+    if (!singular_query(expression->query)) {
+      throw TypeError(std::string{m_token.value} + "() argument " +
+                          std::to_string(m_index) + " must be of ValueType",
+          m_token);
+    }
+  };
+
+  void operator()(const Box<RootQuery>& expression) const {
+    if (!singular_query(expression->query)) {
+      throw TypeError(std::string{m_token.value} + "() argument " +
+                          std::to_string(m_index) + " must be of ValueType",
+          m_token);
+    }
+  };
+
+  void operator()(const Box<FunctionCall>& expression) const {
+    auto name{std::string{expression->name}};
+    auto it{m_function_extensions.find(name)};
+
+    if (it == m_function_extensions.end()) {
+      throw SyntaxError("no such function '"s + name + "'"s, m_token);
+    }
+
+    FunctionExtension ext{it->second};
+
+    if (ext.res != ExpressionType::value) {
+      throw TypeError(std::string{m_token.value} + "() argument " +
+                          std::to_string(m_index) + " must be of ValueType",
+          m_token);
+    }
+  };
+};
+
+void Parser::throw_for_function_signature(
+    const Token& t, const std::vector<expression_t>& args) const {
+  auto name{std::string{t.value}};
+  auto it{m_function_extensions.find(name)};
+
+  if (it == m_function_extensions.end()) {
+    throw SyntaxError("no such function '"s + name + "'"s, t);
+  }
+
+  FunctionExtension ext{it->second};
+
+  // Correct number of arguments
+  if (args.size() != ext.args.size()) {
+    throw TypeError(name + "() takes "s + std::to_string(ext.args.size()) +
+                        " argument"s + (ext.args.size() == 1 ? ""s : "s") +
+                        ", " + std::to_string(args.size()) + " given",
+        t);
+  }
+
+  // Argument types
+  for (size_t i = 0; i < ext.args.size(); i++) {
+    auto typ{ext.args[i]};
+    auto arg{args[i]};
+
+    switch (typ) {
+    case ExpressionType::value:
+      std::visit(ValueTypeVisitor(t, i, m_function_extensions), arg);
+      break;
+    case ExpressionType::logical:
+      if (!(std::holds_alternative<Box<RelativeQuery>>(arg) ||
+              std::holds_alternative<Box<RootQuery>>(arg) ||
+              std::holds_alternative<Box<InfixExpression>>(arg) ||
+              std::holds_alternative<Box<LogicalNotExpression>>(arg))) {
+        throw TypeError(name + "() argument " + std::to_string(i) +
+                            " must be of LogicalType",
+            t);
+      }
+      break;
+    case ExpressionType::nodes:
+      if (!(std::holds_alternative<Box<RelativeQuery>>(arg) ||
+              std::holds_alternative<Box<RootQuery>>(arg) ||
+              (std::holds_alternative<Box<FunctionCall>>(arg) &&
+                  function_result_type(
+                      std::string{std::get<Box<FunctionCall>>(arg)->name}, t) ==
+                      ExpressionType::nodes))) {
+        throw TypeError(
+            name + "() argument " + std::to_string(i) + " must be of NodesType",
+            t);
+      }
+
+    default:
+      break;
+    }
+  }
 }
 
 } // namespace libjsonpath
