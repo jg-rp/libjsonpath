@@ -72,7 +72,7 @@ Lexer::State Lexer::lex_descendant_selection() {
   default:
     backup();
     if (accept_name()) {
-      emit(TokenType::name);
+      emit(TokenType::name_);
       return LEX_SEGMENT;
     } else {
       error("unexpected descendant selection token '"s + c + "'"s);
@@ -97,7 +97,7 @@ Lexer::State Lexer::lex_dot_selector() {
 
   backup();
   if (accept_name()) {
-    emit(TokenType::name);
+    emit(TokenType::name_);
     return LEX_SEGMENT;
   } else {
     error("unexpected shorthand selector '"s + c.value() + "'"s);
@@ -124,7 +124,7 @@ Lexer::State Lexer::lex_inside_bracketed_selection() {
       emit(TokenType::wild);
       continue;
     case '?':
-      emit(TokenType::filter);
+      emit(TokenType::filter_);
       m_filter_nesting_level++;
       return LEX_INSIDE_FILTER;
     case ',':

@@ -16,7 +16,7 @@ enum class TokenType {
   eq,        // ==
   error,     // ERROR
   false_,    // false
-  filter,    // FILTER
+  filter_,   // FILTER
   float_,    // FLOAT
   func_,     // FUNC
   ge,        // >=
@@ -27,7 +27,7 @@ enum class TokenType {
   le,        // <=
   lparen,    // (
   lt,        // <
-  name,      // NAME
+  name_,     // NAME
   ne,        // !=
   not_,      // !
   null_,     // null

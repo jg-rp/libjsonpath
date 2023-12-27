@@ -84,7 +84,7 @@ segment_t Parser::parse_segment(TokenIterator& tokens) const {
   std::vector<selector_t> selectors{};
 
   switch (tokens->type) {
-  case TokenType::name:
+  case TokenType::name_:
     selectors.push_back(
         NameSelector{*tokens, decode_string_token(*tokens), true});
     break;
@@ -127,7 +127,7 @@ std::vector<selector_t> Parser::parse_bracketed_selection(
       items.push_back(
           NameSelector{current, decode_string_token(current), false});
       break;
-    case TokenType::filter:
+    case TokenType::filter_:
       filter_token = current;
       items.push_back(parse_filter_selector(tokens));
       break;
@@ -484,7 +484,8 @@ std::int64_t Parser::token_to_int(const Token& t) const {
 
   // Check if double_result is within the range of int
   if (double_result >= std::numeric_limits<std::int64_t>::min() &&
-      double_result <= std::numeric_limits<std::int64_t>::max()) {
+      double_result <=
+          static_cast<double>(std::numeric_limits<std::int64_t>::max())) {
     result = static_cast<int64_t>(double_result);
   } else {
     throw Exception(

@@ -43,8 +43,8 @@ protected:
 TEST_F(LexerTest, BasicShorthandName) {
   expect_tokens("$.foo.bar", {
                                  {tt::root, "$", 0, "$.foo.bar"},
-                                 {tt::name, "foo", 2, "$.foo.bar"},
-                                 {tt::name, "bar", 6, "$.foo.bar"},
+                                 {tt::name_, "foo", 2, "$.foo.bar"},
+                                 {tt::name_, "bar", 6, "$.foo.bar"},
                                  {tt::eof_, "", 9, "$.foo.bar"},
                              });
 }
@@ -66,7 +66,7 @@ TEST_F(LexerTest, BracketedName) {
 TEST_F(LexerTest, BasicIndex) {
   expect_tokens("$.foo[1]", {
                                 {tt::root, "$", 0, "$.foo[1]"},
-                                {tt::name, "foo", 2, "$.foo[1]"},
+                                {tt::name_, "foo", 2, "$.foo[1]"},
                                 {tt::lbracket, "[", 5, "$.foo[1]"},
                                 {tt::index, "1", 6, "$.foo[1]"},
                                 {tt::rbracket, "]", 7, "$.foo[1]"},
@@ -93,8 +93,8 @@ TEST_F(LexerTest, RootPropertySelectorWithoutDot) {
 TEST_F(LexerTest, WhitespaceAfterRoot) {
   expect_tokens("$ .foo.bar", {
                                   {tt::root, "$", 0, "$ .foo.bar"},
-                                  {tt::name, "foo", 3, "$ .foo.bar"},
-                                  {tt::name, "bar", 7, "$ .foo.bar"},
+                                  {tt::name_, "foo", 3, "$ .foo.bar"},
+                                  {tt::name_, "bar", 7, "$ .foo.bar"},
                                   {tt::eof_, "", 10, "$ .foo.bar"},
                               });
 }
@@ -110,8 +110,8 @@ TEST_F(LexerTest, WhitespaceBeforeDotProperty) {
 TEST_F(LexerTest, whitespaceAfterDotProperty) {
   expect_tokens("$.foo .bar", {
                                   {tt::root, "$", 0, "$.foo .bar"},
-                                  {tt::name, "foo", 2, "$.foo .bar"},
-                                  {tt::name, "bar", 7, "$.foo .bar"},
+                                  {tt::name_, "foo", 2, "$.foo .bar"},
+                                  {tt::name_, "bar", 7, "$.foo .bar"},
                                   {tt::eof_, "", 10, "$.foo .bar"},
                               });
 }
@@ -119,7 +119,7 @@ TEST_F(LexerTest, whitespaceAfterDotProperty) {
 TEST_F(LexerTest, BasicDotWild) {
   expect_tokens("$.foo.*", {
                                {tt::root, "$", 0, "$.foo.*"},
-                               {tt::name, "foo", 2, "$.foo.*"},
+                               {tt::name_, "foo", 2, "$.foo.*"},
                                {tt::wild, "*", 6, "$.foo.*"},
                                {tt::eof_, "", 7, "$.foo.*"},
                            });
@@ -129,7 +129,7 @@ TEST_F(LexerTest, BasicRecurse) {
   expect_tokens("$..foo", {
                               {tt::root, "$", 0, "$..foo"},
                               {tt::ddot, "..", 1, "$..foo"},
-                              {tt::name, "foo", 3, "$..foo"},
+                              {tt::name_, "foo", 3, "$..foo"},
                               {tt::eof_, "", 6, "$..foo"},
                           });
 }
@@ -158,7 +158,7 @@ TEST_F(LexerTest, BracketedNameSelectorDoubleQuotes) {
   expect_tokens(
       "$.foo[\"bar\"]", {
                             {tt::root, "$", 0, "$.foo[\"bar\"]"},
-                            {tt::name, "foo", 2, "$.foo[\"bar\"]"},
+                            {tt::name_, "foo", 2, "$.foo[\"bar\"]"},
                             {tt::lbracket, "[", 5, "$.foo[\"bar\"]"},
                             {tt::dq_string, "bar", 7, "$.foo[\"bar\"]"},
                             {tt::rbracket, "]", 11, "$.foo[\"bar\"]"},
@@ -169,7 +169,7 @@ TEST_F(LexerTest, BracketedNameSelectorDoubleQuotes) {
 TEST_F(LexerTest, BracketedNameSelectorSingleQuotes) {
   expect_tokens("$.foo['bar']", {
                                     {tt::root, "$", 0, "$.foo['bar']"},
-                                    {tt::name, "foo", 2, "$.foo['bar']"},
+                                    {tt::name_, "foo", 2, "$.foo['bar']"},
                                     {tt::lbracket, "[", 5, "$.foo['bar']"},
                                     {tt::sq_string, "bar", 7, "$.foo['bar']"},
                                     {tt::rbracket, "]", 11, "$.foo['bar']"},
@@ -181,7 +181,7 @@ TEST_F(LexerTest, MultipleSelectors) {
   expect_tokens("$.foo['bar', 123, *]",
       {
           {tt::root, "$", 0, "$.foo['bar', 123, *]"},
-          {tt::name, "foo", 2, "$.foo['bar', 123, *]"},
+          {tt::name_, "foo", 2, "$.foo['bar', 123, *]"},
           {tt::lbracket, "[", 5, "$.foo['bar', 123, *]"},
           {tt::sq_string, "bar", 7, "$.foo['bar', 123, *]"},
           {tt::comma, ",", 11, "$.foo['bar', 123, *]"},
@@ -196,7 +196,7 @@ TEST_F(LexerTest, MultipleSelectors) {
 TEST_F(LexerTest, Slice) {
   expect_tokens("$.foo[1:3]", {
                                   {tt::root, "$", 0, "$.foo[1:3]"},
-                                  {tt::name, "foo", 2, "$.foo[1:3]"},
+                                  {tt::name_, "foo", 2, "$.foo[1:3]"},
                                   {tt::lbracket, "[", 5, "$.foo[1:3]"},
                                   {tt::index, "1", 6, "$.foo[1:3]"},
                                   {tt::colon, ":", 7, "$.foo[1:3]"},
@@ -209,11 +209,11 @@ TEST_F(LexerTest, Slice) {
 TEST_F(LexerTest, Filter) {
   expect_tokens("$.foo[?@.bar]", {
                                      {tt::root, "$", 0, "$.foo[?@.bar]"},
-                                     {tt::name, "foo", 2, "$.foo[?@.bar]"},
+                                     {tt::name_, "foo", 2, "$.foo[?@.bar]"},
                                      {tt::lbracket, "[", 5, "$.foo[?@.bar]"},
-                                     {tt::filter, "?", 6, "$.foo[?@.bar]"},
+                                     {tt::filter_, "?", 6, "$.foo[?@.bar]"},
                                      {tt::current, "@", 7, "$.foo[?@.bar]"},
-                                     {tt::name, "bar", 9, "$.foo[?@.bar]"},
+                                     {tt::name_, "bar", 9, "$.foo[?@.bar]"},
                                      {tt::rbracket, "]", 12, "$.foo[?@.bar]"},
                                      {tt::eof_, "", 13, "$.foo[?@.bar]"},
                                  });
@@ -223,12 +223,12 @@ TEST_F(LexerTest, FilterParenthesizedExpression) {
   expect_tokens(
       "$.foo[?(@.bar)]", {
                              {tt::root, "$", 0, "$.foo[?(@.bar)]"},
-                             {tt::name, "foo", 2, "$.foo[?(@.bar)]"},
+                             {tt::name_, "foo", 2, "$.foo[?(@.bar)]"},
                              {tt::lbracket, "[", 5, "$.foo[?(@.bar)]"},
-                             {tt::filter, "?", 6, "$.foo[?(@.bar)]"},
+                             {tt::filter_, "?", 6, "$.foo[?(@.bar)]"},
                              {tt::lparen, "(", 7, "$.foo[?(@.bar)]"},
                              {tt::current, "@", 8, "$.foo[?(@.bar)]"},
-                             {tt::name, "bar", 10, "$.foo[?(@.bar)]"},
+                             {tt::name_, "bar", 10, "$.foo[?(@.bar)]"},
                              {tt::rparen, ")", 13, "$.foo[?(@.bar)]"},
                              {tt::rbracket, "]", 14, "$.foo[?(@.bar)]"},
                              {tt::eof_, "", 15, "$.foo[?(@.bar)]"},
@@ -239,15 +239,15 @@ TEST_F(LexerTest, TwoFilters) {
   expect_tokens("$.foo[?@.bar, ?@.baz]",
       {
           {tt::root, "$", 0, "$.foo[?@.bar, ?@.baz]"},
-          {tt::name, "foo", 2, "$.foo[?@.bar, ?@.baz]"},
+          {tt::name_, "foo", 2, "$.foo[?@.bar, ?@.baz]"},
           {tt::lbracket, "[", 5, "$.foo[?@.bar, ?@.baz]"},
-          {tt::filter, "?", 6, "$.foo[?@.bar, ?@.baz]"},
+          {tt::filter_, "?", 6, "$.foo[?@.bar, ?@.baz]"},
           {tt::current, "@", 7, "$.foo[?@.bar, ?@.baz]"},
-          {tt::name, "bar", 9, "$.foo[?@.bar, ?@.baz]"},
+          {tt::name_, "bar", 9, "$.foo[?@.bar, ?@.baz]"},
           {tt::comma, ",", 12, "$.foo[?@.bar, ?@.baz]"},
-          {tt::filter, "?", 14, "$.foo[?@.bar, ?@.baz]"},
+          {tt::filter_, "?", 14, "$.foo[?@.bar, ?@.baz]"},
           {tt::current, "@", 15, "$.foo[?@.bar, ?@.baz]"},
-          {tt::name, "baz", 17, "$.foo[?@.bar, ?@.baz]"},
+          {tt::name_, "baz", 17, "$.foo[?@.bar, ?@.baz]"},
           {tt::rbracket, "]", 20, "$.foo[?@.bar, ?@.baz]"},
           {tt::eof_, "", 21, "$.foo[?@.bar, ?@.baz]"},
       });
@@ -258,10 +258,10 @@ TEST_F(LexerTest, FilterFunction) {
       "$[?count(@.foo)>2]", {
                                 {tt::root, "$", 0, "$[?count(@.foo)>2]"},
                                 {tt::lbracket, "[", 1, "$[?count(@.foo)>2]"},
-                                {tt::filter, "?", 2, "$[?count(@.foo)>2]"},
+                                {tt::filter_, "?", 2, "$[?count(@.foo)>2]"},
                                 {tt::func_, "count", 3, "$[?count(@.foo)>2]"},
                                 {tt::current, "@", 9, "$[?count(@.foo)>2]"},
-                                {tt::name, "foo", 11, "$[?count(@.foo)>2]"},
+                                {tt::name_, "foo", 11, "$[?count(@.foo)>2]"},
                                 {tt::rparen, ")", 14, "$[?count(@.foo)>2]"},
                                 {tt::gt, ">", 15, "$[?count(@.foo)>2]"},
                                 {tt::int_, "2", 16, "$[?count(@.foo)>2]"},
@@ -275,10 +275,10 @@ TEST_F(LexerTest, FilterFunctionWithTwoArgs) {
       {
           {tt::root, "$", 0, "$[?count(@.foo, 1)>2]"},
           {tt::lbracket, "[", 1, "$[?count(@.foo, 1)>2]"},
-          {tt::filter, "?", 2, "$[?count(@.foo, 1)>2]"},
+          {tt::filter_, "?", 2, "$[?count(@.foo, 1)>2]"},
           {tt::func_, "count", 3, "$[?count(@.foo, 1)>2]"},
           {tt::current, "@", 9, "$[?count(@.foo, 1)>2]"},
-          {tt::name, "foo", 11, "$[?count(@.foo, 1)>2]"},
+          {tt::name_, "foo", 11, "$[?count(@.foo, 1)>2]"},
           {tt::comma, ",", 14, "$[?count(@.foo, 1)>2]"},
           {tt::int_, "1", 16, "$[?count(@.foo, 1)>2]"},
           {tt::rparen, ")", 17, "$[?count(@.foo, 1)>2]"},
@@ -294,11 +294,11 @@ TEST_F(LexerTest, FilterParenthesizedFunction) {
       {
           {tt::root, "$", 0, "$[?(count(@.foo)>2)]"},
           {tt::lbracket, "[", 1, "$[?(count(@.foo)>2)]"},
-          {tt::filter, "?", 2, "$[?(count(@.foo)>2)]"},
+          {tt::filter_, "?", 2, "$[?(count(@.foo)>2)]"},
           {tt::lparen, "(", 3, "$[?(count(@.foo)>2)]"},
           {tt::func_, "count", 4, "$[?(count(@.foo)>2)]"},
           {tt::current, "@", 10, "$[?(count(@.foo)>2)]"},
-          {tt::name, "foo", 12, "$[?(count(@.foo)>2)]"},
+          {tt::name_, "foo", 12, "$[?(count(@.foo)>2)]"},
           {tt::rparen, ")", 15, "$[?(count(@.foo)>2)]"},
           {tt::gt, ">", 16, "$[?(count(@.foo)>2)]"},
           {tt::int_, "2", 17, "$[?(count(@.foo)>2)]"},
@@ -312,12 +312,12 @@ TEST_F(LexerTest, FilterParenthesizedFunctionArgument) {
       {
           {tt::root, "$", 0, "$[?(count((@.foo),1)>2)]"},
           {tt::lbracket, "[", 1, "$[?(count((@.foo),1)>2)]"},
-          {tt::filter, "?", 2, "$[?(count((@.foo),1)>2)]"},
+          {tt::filter_, "?", 2, "$[?(count((@.foo),1)>2)]"},
           {tt::lparen, "(", 3, "$[?(count((@.foo),1)>2)]"},
           {tt::func_, "count", 4, "$[?(count((@.foo),1)>2)]"},
           {tt::lparen, "(", 10, "$[?(count((@.foo),1)>2)]"},
           {tt::current, "@", 11, "$[?(count((@.foo),1)>2)]"},
-          {tt::name, "foo", 13, "$[?(count((@.foo),1)>2)]"},
+          {tt::name_, "foo", 13, "$[?(count((@.foo),1)>2)]"},
           {tt::rparen, ")", 16, "$[?(count((@.foo),1)>2)]"},
           {tt::comma, ",", 17, "$[?(count((@.foo),1)>2)]"},
           {tt::int_, "1", 18, "$[?(count((@.foo),1)>2)]"},
@@ -334,10 +334,10 @@ TEST_F(LexerTest, FilterNested) {
   expect_tokens("$[?@[?@>1]]", {
                                    {tt::root, "$", 0, "$[?@[?@>1]]"},
                                    {tt::lbracket, "[", 1, "$[?@[?@>1]]"},
-                                   {tt::filter, "?", 2, "$[?@[?@>1]]"},
+                                   {tt::filter_, "?", 2, "$[?@[?@>1]]"},
                                    {tt::current, "@", 3, "$[?@[?@>1]]"},
                                    {tt::lbracket, "[", 4, "$[?@[?@>1]]"},
-                                   {tt::filter, "?", 5, "$[?@[?@>1]]"},
+                                   {tt::filter_, "?", 5, "$[?@[?@>1]]"},
                                    {tt::current, "@", 6, "$[?@[?@>1]]"},
                                    {tt::gt, ">", 7, "$[?@[?@>1]]"},
                                    {tt::int_, "1", 8, "$[?@[?@>1]]"},
@@ -351,10 +351,10 @@ TEST_F(LexerTest, FilterNestedBrackets) {
   expect_tokens("$[?@[?@[1]>1]]", {
                                       {tt::root, "$", 0, "$[?@[?@[1]>1]]"},
                                       {tt::lbracket, "[", 1, "$[?@[?@[1]>1]]"},
-                                      {tt::filter, "?", 2, "$[?@[?@[1]>1]]"},
+                                      {tt::filter_, "?", 2, "$[?@[?@[1]>1]]"},
                                       {tt::current, "@", 3, "$[?@[?@[1]>1]]"},
                                       {tt::lbracket, "[", 4, "$[?@[?@[1]>1]]"},
-                                      {tt::filter, "?", 5, "$[?@[?@[1]>1]]"},
+                                      {tt::filter_, "?", 5, "$[?@[?@[1]>1]]"},
                                       {tt::current, "@", 6, "$[?@[?@[1]>1]]"},
                                       {tt::lbracket, "[", 7, "$[?@[?@[1]>1]]"},
                                       {tt::index, "1", 8, "$[?@[?@[1]>1]]"},
@@ -371,7 +371,7 @@ TEST_F(LexerTest, Function) {
   expect_tokens("$[?foo()]", {
                                  {tt::root, "$", 0, "$[?foo()]"},
                                  {tt::lbracket, "[", 1, "$[?foo()]"},
-                                 {tt::filter, "?", 2, "$[?foo()]"},
+                                 {tt::filter_, "?", 2, "$[?foo()]"},
                                  {tt::func_, "foo", 3, "$[?foo()]"},
                                  {tt::rparen, ")", 7, "$[?foo()]"},
                                  {tt::rbracket, "]", 8, "$[?foo()]"},
@@ -383,7 +383,7 @@ TEST_F(LexerTest, FunctionIntLiteral) {
   expect_tokens("$[?foo(42)]", {
                                    {tt::root, "$", 0, "$[?foo(42)]"},
                                    {tt::lbracket, "[", 1, "$[?foo(42)]"},
-                                   {tt::filter, "?", 2, "$[?foo(42)]"},
+                                   {tt::filter_, "?", 2, "$[?foo(42)]"},
                                    {tt::func_, "foo", 3, "$[?foo(42)]"},
                                    {tt::int_, "42", 7, "$[?foo(42)]"},
                                    {tt::rparen, ")", 9, "$[?foo(42)]"},
@@ -397,7 +397,7 @@ TEST_F(LexerTest, FunctionTwoIntArgs) {
       "$[?foo(42, -7)]", {
                              {tt::root, "$", 0, "$[?foo(42, -7)]"},
                              {tt::lbracket, "[", 1, "$[?foo(42, -7)]"},
-                             {tt::filter, "?", 2, "$[?foo(42, -7)]"},
+                             {tt::filter_, "?", 2, "$[?foo(42, -7)]"},
                              {tt::func_, "foo", 3, "$[?foo(42, -7)]"},
                              {tt::int_, "42", 7, "$[?foo(42, -7)]"},
                              {tt::comma, ",", 9, "$[?foo(42, -7)]"},
@@ -413,7 +413,7 @@ TEST_F(LexerTest, BooleanLiterals) {
       "$[?true==false]", {
                              {tt::root, "$", 0, "$[?true==false]"},
                              {tt::lbracket, "[", 1, "$[?true==false]"},
-                             {tt::filter, "?", 2, "$[?true==false]"},
+                             {tt::filter_, "?", 2, "$[?true==false]"},
                              {tt::true_, "true", 3, "$[?true==false]"},
                              {tt::eq, "==", 7, "$[?true==false]"},
                              {tt::false_, "false", 9, "$[?true==false]"},
@@ -427,9 +427,9 @@ TEST_F(LexerTest, NullLiteral) {
       "$[?@.foo == null]", {
                                {tt::root, "$", 0, "$[?@.foo == null]"},
                                {tt::lbracket, "[", 1, "$[?@.foo == null]"},
-                               {tt::filter, "?", 2, "$[?@.foo == null]"},
+                               {tt::filter_, "?", 2, "$[?@.foo == null]"},
                                {tt::current, "@", 3, "$[?@.foo == null]"},
-                               {tt::name, "foo", 5, "$[?@.foo == null]"},
+                               {tt::name_, "foo", 5, "$[?@.foo == null]"},
                                {tt::eq, "==", 9, "$[?@.foo == null]"},
                                {tt::null_, "null", 12, "$[?@.foo == null]"},
                                {tt::rbracket, "]", 16, "$[?@.foo == null]"},
@@ -442,7 +442,7 @@ TEST_F(LexerTest, LogicalAnd) {
       "$[?true && false]", {
                                {tt::root, "$", 0, "$[?true && false]"},
                                {tt::lbracket, "[", 1, "$[?true && false]"},
-                               {tt::filter, "?", 2, "$[?true && false]"},
+                               {tt::filter_, "?", 2, "$[?true && false]"},
                                {tt::true_, "true", 3, "$[?true && false]"},
                                {tt::and_, "&&", 8, "$[?true && false]"},
                                {tt::false_, "false", 11, "$[?true && false]"},
@@ -456,9 +456,9 @@ TEST_F(LexerTest, FloatLiteral) {
       "$[?@.foo > 42.7]", {
                               {tt::root, "$", 0, "$[?@.foo > 42.7]"},
                               {tt::lbracket, "[", 1, "$[?@.foo > 42.7]"},
-                              {tt::filter, "?", 2, "$[?@.foo > 42.7]"},
+                              {tt::filter_, "?", 2, "$[?@.foo > 42.7]"},
                               {tt::current, "@", 3, "$[?@.foo > 42.7]"},
-                              {tt::name, "foo", 5, "$[?@.foo > 42.7]"},
+                              {tt::name_, "foo", 5, "$[?@.foo > 42.7]"},
                               {tt::gt, ">", 9, "$[?@.foo > 42.7]"},
                               {tt::float_, "42.7", 11, "$[?@.foo > 42.7]"},
                               {tt::rbracket, "]", 15, "$[?@.foo > 42.7]"},
@@ -469,7 +469,7 @@ TEST_F(LexerTest, FloatLiteral) {
 TEST_F(LexerTest, NameWithMultiByteChar) {
   expect_tokens("$.☺", {
                            {tt::root, "$", 0, "$.☺"},
-                           {tt::name, "☺", 2, "$.☺"},
+                           {tt::name_, "☺", 2, "$.☺"},
                            {tt::eof_, "", 5, "$.☺"},
                        });
 }
@@ -478,9 +478,9 @@ TEST_F(LexerTest, IntegerLiteralWithExponent) {
   expect_tokens("$[?@.a==1e2]", {
                                     {tt::root, "$", 0, "$[?@.a==1e2]"},
                                     {tt::lbracket, "[", 1, "$[?@.a==1e2]"},
-                                    {tt::filter, "?", 2, "$[?@.a==1e2]"},
+                                    {tt::filter_, "?", 2, "$[?@.a==1e2]"},
                                     {tt::current, "@", 3, "$[?@.a==1e2]"},
-                                    {tt::name, "a", 5, "$[?@.a==1e2]"},
+                                    {tt::name_, "a", 5, "$[?@.a==1e2]"},
                                     {tt::eq, "==", 6, "$[?@.a==1e2]"},
                                     {tt::int_, "1e2", 8, "$[?@.a==1e2]"},
                                     {tt::rbracket, "]", 11, "$[?@.a==1e2]"},
@@ -492,9 +492,9 @@ TEST_F(LexerTest, IntegerLiteralWithNegativeExponent) {
   expect_tokens("$[?@.a==1e-2]", {
                                      {tt::root, "$", 0, "$[?@.a==1e-2]"},
                                      {tt::lbracket, "[", 1, "$[?@.a==1e-2]"},
-                                     {tt::filter, "?", 2, "$[?@.a==1e-2]"},
+                                     {tt::filter_, "?", 2, "$[?@.a==1e-2]"},
                                      {tt::current, "@", 3, "$[?@.a==1e-2]"},
-                                     {tt::name, "a", 5, "$[?@.a==1e-2]"},
+                                     {tt::name_, "a", 5, "$[?@.a==1e-2]"},
                                      {tt::eq, "==", 6, "$[?@.a==1e-2]"},
                                      {tt::float_, "1e-2", 8, "$[?@.a==1e-2]"},
                                      {tt::rbracket, "]", 12, "$[?@.a==1e-2]"},

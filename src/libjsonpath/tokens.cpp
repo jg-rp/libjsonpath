@@ -29,7 +29,7 @@ std::string token_type_to_string(TokenType tt) {
     return "EQ";
   case TokenType::error:
     return "ERROR";
-  case TokenType::filter:
+  case TokenType::filter_:
     return "FILTER";
   case TokenType::func_:
     return "FUNC";
@@ -45,7 +45,7 @@ std::string token_type_to_string(TokenType tt) {
     return "LE";
   case TokenType::lt:
     return "LT";
-  case TokenType::name:
+  case TokenType::name_:
     return "NAME";
   case TokenType::ne:
     return "NE";
