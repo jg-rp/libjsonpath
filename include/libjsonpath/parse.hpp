@@ -58,12 +58,12 @@ enum class ExpressionType {
 };
 
 // The argument and result types for a JSONPath function extension.
-struct FunctionExtension {
+struct FunctionExtensionTypes {
   std::vector<ExpressionType> args;
   ExpressionType res;
 };
 
-const std::unordered_map<std::string, FunctionExtension>
+const std::unordered_map<std::string, FunctionExtensionTypes>
     DEFAULT_FUNCTION_EXTENSIONS{
         {"count", {{ExpressionType::nodes}, ExpressionType::value}},
         {"length", {{ExpressionType::value}, ExpressionType::value}},
@@ -81,7 +81,8 @@ const std::unordered_map<std::string, FunctionExtension>
 class Parser {
 public:
   Parser() : m_function_extensions{DEFAULT_FUNCTION_EXTENSIONS} {};
-  Parser(std::unordered_map<std::string, FunctionExtension> function_extensions)
+  Parser(std::unordered_map<std::string, FunctionExtensionTypes>
+          function_extensions)
       : m_function_extensions{function_extensions} {}
 
   // Parse tokens from _tokens_ and return a sequence of segments making up
@@ -89,7 +90,7 @@ public:
   segments_t parse(const Tokens& tokens) const;
 
 protected:
-  std::unordered_map<std::string, FunctionExtension> m_function_extensions;
+  std::unordered_map<std::string, FunctionExtensionTypes> m_function_extensions;
   segments_t parse_path(TokenIterator& tokens) const;
   segments_t parse_filter_path(TokenIterator& tokens) const;
   segment_t parse_segment(TokenIterator& tokens) const;

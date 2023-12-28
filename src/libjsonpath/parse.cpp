@@ -712,11 +712,11 @@ ExpressionType Parser::function_result_type(
 struct ValueTypeVisitor {
   const Token& m_token;
   const size_t m_index;
-  const std::unordered_map<std::string, FunctionExtension>&
+  const std::unordered_map<std::string, FunctionExtensionTypes>&
       m_function_extensions;
 
   ValueTypeVisitor(const Token& t, size_t index,
-      const std::unordered_map<std::string, FunctionExtension>&
+      const std::unordered_map<std::string, FunctionExtensionTypes>&
           function_extensions)
       : m_token{t}, m_index{index}, m_function_extensions{function_extensions} {
   }
@@ -764,7 +764,7 @@ struct ValueTypeVisitor {
       throw SyntaxError("no such function '"s + name + "'"s, m_token);
     }
 
-    FunctionExtension ext{it->second};
+    FunctionExtensionTypes ext{it->second};
 
     if (ext.res != ExpressionType::value) {
       throw TypeError(std::string{m_token.value} + "() argument " +
@@ -783,7 +783,7 @@ void Parser::throw_for_function_signature(
     throw SyntaxError("no such function '"s + name + "'"s, t);
   }
 
-  FunctionExtension ext{it->second};
+  FunctionExtensionTypes ext{it->second};
 
   // Correct number of arguments
   if (args.size() != ext.args.size()) {

@@ -22,7 +22,7 @@ segments_t parse(std::string_view s) {
 }
 
 segments_t parse(std::string_view s,
-    std::unordered_map<std::string, FunctionExtension> function_extensions) {
+    std::unordered_map<std::string, FunctionExtensionTypes> function_extensions) {
   Lexer lexer{s};
   lexer.run();
   auto tokens{lexer.tokens()};

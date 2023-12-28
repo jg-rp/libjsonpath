@@ -20,7 +20,7 @@ inline constexpr std::string_view VERSION{LIBJSONPATH_VERSION};
 // node definitions.
 segments_t parse(std::string_view s);
 segments_t parse(std::string_view s,
-    std::unordered_map<std::string, FunctionExtension> function_extensions);
+    std::unordered_map<std::string, FunctionExtensionTypes> function_extensions);
 
 // Return a canonical string representation of a sequence of JSONPath segments.
 std::string to_string(const segments_t& path);
