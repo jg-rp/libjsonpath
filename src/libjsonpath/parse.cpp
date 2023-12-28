@@ -1,5 +1,6 @@
 #include "libjsonpath/parse.hpp"
 #include "libjsonpath/exceptions.hpp"
+#include "libjsonpath/lex.hpp"
 #include "libjsonpath/utils.hpp" // libjsonpath::singular_query
 #include <cassert>
 #include <cstdint>      // std::int32_t std::int64_t
@@ -16,6 +17,31 @@ namespace libjsonpath {
 using namespace std::string_literals;
 
 segments_t Parser::parse(const Tokens& tokens) const {
+  TokenIterator it = tokens.cbegin();
+
+  if (it->type == TokenType::root) {
+    it++;
+  }
+
+  auto segments{parse_path(it)};
+
+  if (it->type != TokenType::eof_) {
+    throw SyntaxError(
+        "expected end of query, found '{"s + std::string(it->value) + "'"s,
+        *it);
+  }
+
+  return segments;
+}
+
+segments_t Parser::parse(std::string_view s) const {
+  Lexer lexer{s};
+  lexer.run();
+  auto tokens{lexer.tokens()};
+  if (tokens.size() && tokens.back().type == TokenType::error) {
+    throw SyntaxError(tokens.back().value, tokens.back());
+  }
+
   TokenIterator it = tokens.cbegin();
 
   if (it->type == TokenType::root) {

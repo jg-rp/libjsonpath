@@ -1,3 +1,4 @@
+#include "libjsonpath/parse.hpp" // libjsonpath::Parser
 #include "libjsonpath/jsonpath.hpp" // libjsonpath::parse libjsonpath::path_to_string
 #include <gtest/gtest.h>            // EXPEXT_* TEST_F testing::Test
 #include <string_view>              // string_view
@@ -5,8 +6,13 @@
 class ParserTest : public testing::Test {
 protected:
   void expect_to_string(std::string_view query, std::string_view want) {
+    // `parse` convenience function.
     auto segments{libjsonpath::parse(query)};
     EXPECT_EQ(libjsonpath::to_string(segments), want);
+
+    // `Parser.parse()` from a string.
+    libjsonpath::Parser parser{};
+    EXPECT_EQ(libjsonpath::to_string(parser.parse(query)), want);
   }
 };
 

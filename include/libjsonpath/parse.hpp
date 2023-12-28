@@ -88,6 +88,7 @@ public:
   // Parse tokens from _tokens_ and return a sequence of segments making up
   // the JSONPath.
   segments_t parse(const Tokens& tokens) const;
+  segments_t parse(std::string_view s) const;
 
 protected:
   std::unordered_map<std::string, FunctionExtensionTypes> m_function_extensions;
