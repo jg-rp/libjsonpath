@@ -228,9 +228,20 @@ SliceSelector Parser::parse_slice_selector(TokenIterator& tokens) const {
 FilterSelector Parser::parse_filter_selector(TokenIterator& tokens) const {
   const auto filter_token{*tokens};
   tokens++;
+  auto expr{parse_filter_expression(tokens, PRECEDENCE_LOWEST)};
+
+  if (std::holds_alternative<Box<FunctionCall>>(expr)) {
+    auto func{std::get<Box<FunctionCall>>(expr)};
+    auto name{std::string{func->name}};
+    if (function_result_type(name, func->token) == ExpressionType::value) {
+      throw SyntaxError(
+          "result of "s + name + "() must be compared", func->token);
+    }
+  }
+
   return FilterSelector{
       filter_token,
-      parse_filter_expression(tokens, PRECEDENCE_LOWEST),
+      std::move(expr),
   };
 }
 
@@ -275,10 +286,13 @@ expression_t Parser::parse_infix(
   auto right{parse_filter_expression(tokens, precedence)};
 
   // Non-singular queries are not allowed to be compared.
+  throw_for_non_singular_query(left);
+  throw_for_non_singular_query(right);
+
   // Use precedence to determine if the operator is a comparison operator.
   if (precedence == PRECEDENCE_COMPARISON) {
-    throw_for_non_singular_query(left);
-    throw_for_non_singular_query(right);
+    thrown_for_non_comparable_function(left);
+    thrown_for_non_comparable_function(right);
   }
 
   return Box(InfixExpression{
@@ -478,6 +492,18 @@ void Parser::throw_for_non_singular_query(const expression_t& expr) const {
     if (!singular_query(relative_query->query)) {
       throw SyntaxError(
           "non-singular query is not comparable", relative_query->token);
+    }
+  }
+}
+
+void Parser::thrown_for_non_comparable_function(
+    const expression_t& expr) const {
+  if (std::holds_alternative<Box<FunctionCall>>(expr)) {
+    auto func{std::get<Box<FunctionCall>>(expr)};
+    auto name{std::string{func->name}};
+    if (function_result_type(name, func->token) != ExpressionType::value) {
+      throw TypeError(
+          "result of "s + name + "() is not comparable", func->token);
     }
   }
 }
@@ -701,7 +727,9 @@ std::string Parser::encode_utf8(
     std::int32_t code_point, const Token& token) const {
   std::string rv;
 
-  if (code_point <= 0x7F) {
+  if (code_point <= 0x1f) {
+    throw SyntaxError("invalid \\uXXXX escape", token);
+  } else if (code_point <= 0x7F) {
     // Single-byte UTF-8 encoding for code points up to 7F(hex)
     rv += static_cast<char>(code_point & 0x7F);
   } else if (code_point <= 0x7FF) {

@@ -14,6 +14,15 @@ protected:
       EXPECT_EQ(std::string{e.what()}, message);
     }
   }
+
+  void expect_type_error(std::string_view query, std::string_view message) {
+    EXPECT_THROW(libjsonpath::parse(query), libjsonpath::TypeError);
+    try {
+      libjsonpath::parse(query);
+    } catch (const libjsonpath::TypeError& e) {
+      EXPECT_EQ(std::string{e.what()}, message);
+    }
+  }
 };
 
 TEST_F(ErrorTest, LeadingWhitespace) {
@@ -52,4 +61,19 @@ TEST_F(ErrorTest, NegativeIntLiteralWithLeadingZero) {
 TEST_F(ErrorTest, ArrayIndexWithLeadingZero) {
   expect_syntax_error("$.foo[01]",
       "array indicies with a leading zero are not allowed ('$.foo[01]':6)");
+}
+
+TEST_F(ErrorTest, NameSelectorInvalidEscape) {
+  expect_syntax_error(
+      "$[\"\\u0001\"]", "invalid \\uXXXX escape ('$[\"\\u0001\"]':3)");
+}
+
+TEST_F(ErrorTest, ResultMustBeCompared) {
+  expect_syntax_error("$[?count(@..*)]",
+      "result of count() must be compared ('$[?count(@..*)]':3)");
+}
+
+TEST_F(ErrorTest, ResultIsNotComparable) {
+  expect_type_error("$[?match(@.a, 'a.*')==true]",
+      "result of match() is not comparable ('$[?match(@.a, 'a.*')==true]':3)");
 }
