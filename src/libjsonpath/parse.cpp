@@ -573,7 +573,7 @@ void Parser::replaceAll(std::string& original, std::string_view substring,
 std::string Parser::unescape_json_string(
     std::string_view sv, const Token& token) const {
   std::string rv{};
-  char byte;               // current byte
+  unsigned char byte{};    // current byte
   char digit;              // escape sequence hex digit
   std::int32_t code_point; // decoded \uXXXX or \uXXXX\uXXXX escape sequence
   std::string::size_type index{0}; // current byte index in sv
@@ -582,9 +582,6 @@ std::string Parser::unescape_json_string(
 
   while (index < length) {
     byte = sv[index++];
-    if (byte < 0x1f) {
-      throw SyntaxError("invalid character for string literal", token);
-    }
 
     if (byte == '\\') {
       if (index < length) {
@@ -720,7 +717,38 @@ std::string Parser::unescape_json_string(
       }
 
     } else {
-      rv.push_back(byte);
+      // Find invalid characters.
+      // Bytes that are less than 0x1f and not a continuation byte.
+      if ((byte & 0x80) == 0) {
+        // Single-byte code point
+        if (byte <= 0x1F) {
+          throw SyntaxError("invalid character in string literal", token);
+        }
+        rv.push_back(byte);
+      } else if ((byte & 0xE0) == 0xC0) {
+        // Start of two-byte code point
+        rv.push_back(byte);
+        rv.push_back(sv[index]);
+        index++;
+      } else if ((byte & 0xF0) == 0xE0) {
+        // Start of a three-byte code point
+        rv.push_back(byte);
+        rv.push_back(sv[index]);
+        index++;
+        rv.push_back(sv[index]);
+        index++;
+      } else if ((byte & 0xF8) == 0xF0) {
+        // Start of a four-byte code point
+        rv.push_back(byte);
+        rv.push_back(sv[index]);
+        index++;
+        rv.push_back(sv[index]);
+        index++;
+        rv.push_back(sv[index]);
+        index++;
+      } else {
+        throw SyntaxError("invalid character for string literal", token);
+      }
     }
   }
 

@@ -66,7 +66,7 @@ TEST_F(ErrorTest, ArrayIndexWithLeadingZero) {
 TEST_F(ErrorTest, NameSelectorInvalidCharacter) {
   expect_syntax_error("$[\"\x01"
                       "\"]",
-      "invalid character for string literal ('$[\"\x01"
+      "invalid character in string literal ('$[\"\x01"
       "\"]':3)");
 }
 

@@ -170,6 +170,10 @@ TEST_F(ParserTest, ControlPrecedenceWithParens) {
   expect_to_string("$[?!(@.a && !@.b)]", "$[?!(@['a'] && !@['b'])]");
 }
 
+TEST_F(ParserTest, ExtendedUnicodeNameSelector) {
+  expect_to_string("$.☺", "$['☺']");
+}
+
 TEST_F(ParserTest, DoubleQuotedEscapedNameSelector) {
   expect_to_string("$[\"\\u263A\"]", "$['☺']");
 }
