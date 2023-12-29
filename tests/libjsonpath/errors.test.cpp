@@ -63,9 +63,11 @@ TEST_F(ErrorTest, ArrayIndexWithLeadingZero) {
       "array indicies with a leading zero are not allowed ('$.foo[01]':6)");
 }
 
-TEST_F(ErrorTest, NameSelectorInvalidEscape) {
-  expect_syntax_error(
-      "$[\"\\u0001\"]", "invalid \\uXXXX escape ('$[\"\\u0001\"]':3)");
+TEST_F(ErrorTest, NameSelectorInvalidCharacter) {
+  expect_syntax_error("$[\"\x01"
+                      "\"]",
+      "invalid character for string literal ('$[\"\x01"
+      "\"]':3)");
 }
 
 TEST_F(ErrorTest, ResultMustBeCompared) {

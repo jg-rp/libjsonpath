@@ -582,6 +582,10 @@ std::string Parser::unescape_json_string(
 
   while (index < length) {
     byte = sv[index++];
+    if (byte < 0x1f) {
+      throw SyntaxError("invalid character for string literal", token);
+    }
+
     if (byte == '\\') {
       if (index < length) {
         digit = sv[index++];
@@ -727,9 +731,7 @@ std::string Parser::encode_utf8(
     std::int32_t code_point, const Token& token) const {
   std::string rv;
 
-  if (code_point <= 0x1f) {
-    throw SyntaxError("invalid \\uXXXX escape", token);
-  } else if (code_point <= 0x7F) {
+  if (code_point <= 0x7F) {
     // Single-byte UTF-8 encoding for code points up to 7F(hex)
     rv += static_cast<char>(code_point & 0x7F);
   } else if (code_point <= 0x7FF) {
