@@ -42,7 +42,7 @@ TEST_F(ErrorTest, EmptyBracketedSegment) {
 }
 
 TEST_F(ErrorTest, NonSingularQueryInComparison) {
-  expect_syntax_error(
+  expect_type_error(
       "$[?@[*]==0]", "non-singular query is not comparable ('$[?@[*]==0]':3)");
 }
 
@@ -71,7 +71,7 @@ TEST_F(ErrorTest, NameSelectorInvalidCharacter) {
 }
 
 TEST_F(ErrorTest, ResultMustBeCompared) {
-  expect_syntax_error("$[?count(@..*)]",
+  expect_type_error("$[?count(@..*)]",
       "result of count() must be compared ('$[?count(@..*)]':3)");
 }
 

@@ -234,7 +234,7 @@ FilterSelector Parser::parse_filter_selector(TokenIterator& tokens) const {
     auto func{std::get<Box<FunctionCall>>(expr)};
     auto name{std::string{func->name}};
     if (function_result_type(name, func->token) == ExpressionType::value) {
-      throw SyntaxError(
+      throw TypeError(
           "result of "s + name + "() must be compared", func->token);
     }
   }
@@ -482,7 +482,7 @@ void Parser::throw_for_non_singular_query(const expression_t& expr) const {
   if (std::holds_alternative<Box<RootQuery>>(expr)) {
     const auto& root_query{std::get<Box<RootQuery>>(expr)};
     if (!singular_query(root_query->query)) {
-      throw SyntaxError(
+      throw TypeError(
           "non-singular query is not comparable", root_query->token);
     }
   }
@@ -490,7 +490,7 @@ void Parser::throw_for_non_singular_query(const expression_t& expr) const {
   if (std::holds_alternative<Box<RelativeQuery>>(expr)) {
     auto& relative_query{std::get<Box<RelativeQuery>>(expr)};
     if (!singular_query(relative_query->query)) {
-      throw SyntaxError(
+      throw TypeError(
           "non-singular query is not comparable", relative_query->token);
     }
   }
@@ -728,26 +728,20 @@ std::string Parser::unescape_json_string(
       } else if ((byte & 0xE0) == 0xC0) {
         // Start of two-byte code point
         rv.push_back(byte);
-        rv.push_back(sv[index]);
-        index++;
+        rv.push_back(sv[index++]);
       } else if ((byte & 0xF0) == 0xE0) {
         // Start of a three-byte code point
         rv.push_back(byte);
-        rv.push_back(sv[index]);
-        index++;
-        rv.push_back(sv[index]);
-        index++;
+        rv.push_back(sv[index++]);
+        rv.push_back(sv[index++]);
       } else if ((byte & 0xF8) == 0xF0) {
         // Start of a four-byte code point
         rv.push_back(byte);
-        rv.push_back(sv[index]);
-        index++;
-        rv.push_back(sv[index]);
-        index++;
-        rv.push_back(sv[index]);
-        index++;
+        rv.push_back(sv[index++]);
+        rv.push_back(sv[index++]);
+        rv.push_back(sv[index++]);
       } else {
-        throw SyntaxError("invalid character for string literal", token);
+        throw EncodingError("invalid character for string literal", token);
       }
     }
   }
@@ -778,7 +772,7 @@ std::string Parser::encode_utf8(
     rv += static_cast<char>(0x80 | ((code_point >> 6) & 0x3F));
     rv += static_cast<char>(0x80 | (code_point & 0x3F));
   } else {
-    throw SyntaxError("invalid code point", token);
+    throw EncodingError("invalid code point", token);
   }
 
   return rv;
@@ -788,7 +782,7 @@ ExpressionType Parser::function_result_type(
     std::string name, const Token& t) const {
   auto it{m_function_extensions.find(name)};
   if (it == m_function_extensions.end()) {
-    throw SyntaxError("no such function '"s + name + "'"s, t);
+    throw NameError("no such function '"s + name + "'"s, t);
   }
   return it->second.res;
 }
@@ -845,7 +839,7 @@ struct ValueTypeVisitor {
     auto it{m_function_extensions.find(name)};
 
     if (it == m_function_extensions.end()) {
-      throw SyntaxError("no such function '"s + name + "'"s, m_token);
+      throw NameError("no such function '"s + name + "'"s, m_token);
     }
 
     FunctionExtensionTypes ext{it->second};
@@ -864,7 +858,7 @@ void Parser::throw_for_function_signature(
   auto it{m_function_extensions.find(name)};
 
   if (it == m_function_extensions.end()) {
-    throw SyntaxError("no such function '"s + name + "'"s, t);
+    throw NameError("no such function '"s + name + "'"s, t);
   }
 
   FunctionExtensionTypes ext{it->second};

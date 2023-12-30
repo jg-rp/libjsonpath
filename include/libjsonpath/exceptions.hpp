@@ -62,6 +62,30 @@ public:
       : Exception{message, token} {};
 };
 
+// An exception thrown due to an out of range array index.
+class IndexError : public Exception {
+public:
+  IndexError(std::string_view message, const Token& token)
+      : Exception{message, token} {};
+};
+
+// An exception thrown due to a call to an unknown function extension.
+class NameError : public Exception {
+public:
+  NameError(std::string_view message, const Token& token)
+      : Exception{message, token} {};
+};
+
+// An exception thrown due to bad query encoding. The query is probably
+// not encoded using UTF-8.
+class EncodingError : public Exception {
+public:
+  EncodingError(std::string_view message, const Token& token)
+      : Exception{message, token} {};
+};
+
+//
+
 } // namespace libjsonpath
 
 #endif // LIBJSONPATH_EXCEPTIONS_H
