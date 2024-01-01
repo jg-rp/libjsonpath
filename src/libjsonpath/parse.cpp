@@ -285,14 +285,10 @@ expression_t Parser::parse_infix(
   auto op{get_binary_operator(token)};
   auto right{parse_filter_expression(tokens, precedence)};
 
-  // Non-singular queries are not allowed to be compared.
-  throw_for_non_singular_query(left);
-  throw_for_non_singular_query(right);
-
   // Use precedence to determine if the operator is a comparison operator.
   if (precedence == PRECEDENCE_COMPARISON) {
-    thrown_for_non_comparable_function(left);
-    thrown_for_non_comparable_function(right);
+    throw_for_non_comparable(left);
+    throw_for_non_comparable(right);
   }
 
   return Box(InfixExpression{
@@ -478,7 +474,7 @@ std::string Parser::decode_string_token(const Token& t) const {
   return unescape_json_string(s, t);
 }
 
-void Parser::throw_for_non_singular_query(const expression_t& expr) const {
+void Parser::throw_for_non_comparable(const expression_t& expr) const {
   if (std::holds_alternative<Box<RootQuery>>(expr)) {
     const auto& root_query{std::get<Box<RootQuery>>(expr)};
     if (!singular_query(root_query->query)) {
@@ -494,10 +490,7 @@ void Parser::throw_for_non_singular_query(const expression_t& expr) const {
           "non-singular query is not comparable", relative_query->token);
     }
   }
-}
 
-void Parser::thrown_for_non_comparable_function(
-    const expression_t& expr) const {
   if (std::holds_alternative<Box<FunctionCall>>(expr)) {
     auto func{std::get<Box<FunctionCall>>(expr)};
     auto name{std::string{func->name}};

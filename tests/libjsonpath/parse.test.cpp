@@ -199,3 +199,7 @@ TEST_F(ParserTest, IntegerLiteralWithPositiveExponent) {
 TEST_F(ParserTest, IntegerLiteralWithNegativeExponent) {
   expect_to_string("$[?@.a==1e-2]", "$[?@['a'] == 0.01]");
 }
+
+TEST_F(ParserTest, NonSingularExistenceAndExistence) {
+  expect_to_string("$[?@..* && @.b]", "$[?(@..[*] && @['b'])]");
+}

@@ -138,11 +138,9 @@ protected:
   // output as a double quoted string.
   std::string decode_string_token(const Token& t) const;
 
-  // Throw a SyntaxError if _expr_ is not a singular query.
-  void throw_for_non_singular_query(const expression_t& expr) const;
-
-  // Throw a TypeError if _expr_ is not comparable.
-  void thrown_for_non_comparable_function(const expression_t& expr) const;
+  // Throw a SyntaxError if _expr_ is not a singular query, or a TypeError
+  // if _expr_ is a function returning a non ValueType result.
+  void throw_for_non_comparable(const expression_t& expr) const;
 
 private:
   // Convert a Token's value to an int. It is assumed that the view is
