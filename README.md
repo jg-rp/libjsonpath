@@ -18,6 +18,7 @@ int main(int argc, const char* argv[]) {
 
   auto path{libjsonpath::parse(argv[1])};
   std::cout << libjsonpath::to_string(path) << std::endl;
+  return 0;
 }
 ```
 
@@ -25,4 +26,17 @@ Given the query `$.foo.bar[?@.some > $.thing]`, we get the following printed to 
 
 ```plain
 $['foo']['bar'][?@['some'] > $['thing']]
+```
+
+## Build and run benchmarks
+
+Benchmarks are excluded from the `ALL` target and should be built in "Release" mode.
+
+```
+$ mkdir build_benchmarks
+$ cd build_benchmarks
+$ cmake -DCMAKE_BUILD_TYPE=Release ..
+$ cmake --build . --config Release --target lexer_benchmarks --target parser_benchmarks
+$ ./lexer_benchmark
+$ ./parser_benchmark
 ```

@@ -181,3 +181,50 @@ include(GoogleTest)
 gtest_discover_tests(lexer_tests)
 gtest_discover_tests(parser_tests)
 gtest_discover_tests(error_tests)
+
+# Google's benchmark
+add_subdirectory(extern/benchmark EXCLUDE_FROM_ALL)
+
+# Lexer benchmarks
+add_executable(
+  lexer_benchmarks EXCLUDE_FROM_ALL
+  benchmarks/lex.bench.cpp
+  src/libjsonpath/lex.cpp
+  src/libjsonpath/tokens.cpp
+  src/libjsonpath/utils.cpp
+  
+)
+
+target_include_directories(lexer_benchmarks PUBLIC 
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>  
+)
+
+target_link_libraries(
+  lexer_benchmarks
+  libjsonpath_compiler_flags
+  benchmark::benchmark
+)
+
+# Parser benchmarks
+add_executable(
+  parser_benchmarks EXCLUDE_FROM_ALL
+  benchmarks/parse.bench.cpp
+  src/libjsonpath/jsonpath.cpp
+  src/libjsonpath/tokens.cpp
+  src/libjsonpath/lex.cpp
+  src/libjsonpath/parse.cpp
+  src/libjsonpath/utils.cpp
+  
+)
+
+target_include_directories(parser_benchmarks PUBLIC 
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>  
+)
+
+target_link_libraries(
+  parser_benchmarks
+  libjsonpath_compiler_flags
+  benchmark::benchmark
+)
