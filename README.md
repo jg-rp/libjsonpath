@@ -33,9 +33,9 @@ $['foo']['bar'][?@['some'] > $['thing']]
 Benchmarks are excluded from the `ALL` target and should be built in "Release" mode.
 
 ```
-$ mkdir build_benchmarks
-$ cd build_benchmarks
-$ cmake -DCMAKE_BUILD_TYPE=Release ..
+$ mkdir build_bench
+$ cd build_bench
+$ cmake -DLIBJSONPATH_BUILD_BENCHMARKS=ON -DCMAKE_BUILD_TYPE=Release ..
 $ cmake --build . --config Release --target lexer_benchmarks --target parser_benchmarks
 $ ./lexer_benchmark
 $ ./parser_benchmark

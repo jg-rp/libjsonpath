@@ -7,6 +7,8 @@ project(libjsonpath
   HOMEPAGE_URL "https://github.com/jg-rp/libjsonpath"
 )
 
+option(LIBJSONPATH_BUILD_BENCHMARKS "Build benchmark executables" OFF)
+
 configure_file(
   ${CMAKE_CURRENT_SOURCE_DIR}/config.hpp.in
   ${CMAKE_CURRENT_SOURCE_DIR}/include/libjsonpath/config.hpp
@@ -182,49 +184,52 @@ gtest_discover_tests(lexer_tests)
 gtest_discover_tests(parser_tests)
 gtest_discover_tests(error_tests)
 
-# Google's benchmark
-add_subdirectory(extern/benchmark EXCLUDE_FROM_ALL)
+if(LIBJSONPATH_BUILD_BENCHMARKS)
+  # Google's benchmark
+  add_subdirectory(extern/benchmark EXCLUDE_FROM_ALL)
 
-# Lexer benchmarks
-add_executable(
-  lexer_benchmarks EXCLUDE_FROM_ALL
-  benchmarks/lex.bench.cpp
-  src/libjsonpath/lex.cpp
-  src/libjsonpath/tokens.cpp
-  src/libjsonpath/utils.cpp
-  
-)
+  # Lexer benchmarks
+  add_executable(
+    lexer_benchmarks EXCLUDE_FROM_ALL
+    benchmarks/lex.bench.cpp
+    src/libjsonpath/lex.cpp
+    src/libjsonpath/tokens.cpp
+    src/libjsonpath/utils.cpp
+    
+  )
 
-target_include_directories(lexer_benchmarks PUBLIC 
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include>  
-)
+  target_include_directories(lexer_benchmarks PUBLIC 
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>  
+  )
 
-target_link_libraries(
-  lexer_benchmarks
-  libjsonpath_compiler_flags
-  benchmark::benchmark
-)
+  target_link_libraries(
+    lexer_benchmarks
+    libjsonpath_compiler_flags
+    benchmark::benchmark
+  )
 
-# Parser benchmarks
-add_executable(
-  parser_benchmarks EXCLUDE_FROM_ALL
-  benchmarks/parse.bench.cpp
-  src/libjsonpath/jsonpath.cpp
-  src/libjsonpath/tokens.cpp
-  src/libjsonpath/lex.cpp
-  src/libjsonpath/parse.cpp
-  src/libjsonpath/utils.cpp
-  
-)
+  # Parser benchmarks
+  add_executable(
+    parser_benchmarks EXCLUDE_FROM_ALL
+    benchmarks/parse.bench.cpp
+    src/libjsonpath/jsonpath.cpp
+    src/libjsonpath/tokens.cpp
+    src/libjsonpath/lex.cpp
+    src/libjsonpath/parse.cpp
+    src/libjsonpath/utils.cpp
+    
+  )
 
-target_include_directories(parser_benchmarks PUBLIC 
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include>  
-)
+  target_include_directories(parser_benchmarks PUBLIC 
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>  
+  )
 
-target_link_libraries(
-  parser_benchmarks
-  libjsonpath_compiler_flags
-  benchmark::benchmark
-)
+  target_link_libraries(
+    parser_benchmarks
+    libjsonpath_compiler_flags
+    benchmark::benchmark
+  )
+
+endif(LIBJSONPATH_BUILD_BENCHMARKS)
