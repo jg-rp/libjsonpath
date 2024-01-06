@@ -3,16 +3,16 @@
 
 #include "libjsonpath/selectors.hpp"
 #include "libjsonpath/tokens.hpp"
-#include <deque>         // std::deque
 #include <string>        // std::string
 #include <string_view>   // std::string_view
 #include <unordered_map> // std::unordered_map
 #include <unordered_set> // std::unordered_set
+#include <vector>         // std::vector
 
 namespace libjsonpath {
 
-using Tokens = std::deque<Token>;
-using TokenIterator = std::deque<Token>::const_iterator;
+using Tokens = std::vector<Token>;
+using TokenIterator = std::vector<Token>::const_iterator;
 
 // JSONPath filter expression operator precedence. These constants are passed
 // to `parse_filter_expression()` when parsing prefix and infix expressions.

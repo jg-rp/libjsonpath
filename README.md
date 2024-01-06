@@ -2,7 +2,7 @@
 
 A JSONPath parser written in C++, targeting C++17.
 
-This project is a work in progress. So far we have a lexer producing a `std::deque<Token>`, and a parser that parses those tokens into a `std::vector<std::variant<Segment, RecursiveSegment>>`. When a segment includes a filter selector, that filter selector's `expression` member is effectively the root of a parse tree for the filter expression. See `include/libjsonpath/selectors.hpp` for a description of segment, selector and filter expression nodes.
+This project is a work in progress. So far we have a lexer producing a `std::vector<Token>`, and a parser that parses those tokens into a `std::vector<std::variant<Segment, RecursiveSegment>>`. When a segment includes a filter selector, that filter selector's `expression` member is effectively the root of a parse tree for the filter expression. See `include/libjsonpath/selectors.hpp` for a description of segment, selector and filter expression nodes.
 
 This example parses a JSONPath query string from the command line and prints a canonical representation of the resulting structure.
 
@@ -33,10 +33,9 @@ $['foo']['bar'][?@['some'] > $['thing']]
 Benchmarks are excluded from the `ALL` target and should be built in "Release" mode.
 
 ```
-$ mkdir build_bench
+$ cmake -DLIBJSONPATH_BUILD_BENCHMARKS=ON -DCMAKE_BUILD_TYPE=Release -S . -B build_bench
+$ cmake --build build_bench --config Release --target lexer_benchmarks --target parser_benchmarks
 $ cd build_bench
-$ cmake -DLIBJSONPATH_BUILD_BENCHMARKS=ON -DCMAKE_BUILD_TYPE=Release ..
-$ cmake --build . --config Release --target lexer_benchmarks --target parser_benchmarks
 $ ./lexer_benchmark
 $ ./parser_benchmark
 ```
