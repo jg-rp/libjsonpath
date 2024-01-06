@@ -69,6 +69,8 @@ add_library(jsonpath
   src/libjsonpath/utils.cpp
 )
 
+set_property(TARGET jsonpath PROPERTY POSITION_INDEPENDENT_CODE ON)
+
 target_link_libraries(jsonpath PUBLIC libjsonpath_compiler_flags)
 
 target_include_directories(jsonpath PUBLIC 
@@ -233,3 +235,4 @@ if(LIBJSONPATH_BUILD_BENCHMARKS)
   )
 
 endif(LIBJSONPATH_BUILD_BENCHMARKS)
+
