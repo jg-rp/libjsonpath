@@ -174,4 +174,4 @@ using segment_t = std::variant<std::monostate, Segment, RecursiveSegment>;
 
 } // namespace libjsonpath
 
-#endif
+#endif // LIBJSONPATH_SELECTORS_H

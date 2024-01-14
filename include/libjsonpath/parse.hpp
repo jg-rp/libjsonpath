@@ -7,7 +7,7 @@
 #include <string_view>   // std::string_view
 #include <unordered_map> // std::unordered_map
 #include <unordered_set> // std::unordered_set
-#include <vector>         // std::vector
+#include <vector>        // std::vector
 
 namespace libjsonpath {
 
@@ -63,16 +63,20 @@ struct FunctionExtensionTypes {
   ExpressionType res;
 };
 
-const std::unordered_map<std::string, FunctionExtensionTypes>
-    DEFAULT_FUNCTION_EXTENSIONS{
-        {"count", {{ExpressionType::nodes}, ExpressionType::value}},
-        {"length", {{ExpressionType::value}, ExpressionType::value}},
-        {"match", {{ExpressionType::value, ExpressionType::value},
-                      ExpressionType::logical}},
-        {"search", {{ExpressionType::value, ExpressionType::value},
-                       ExpressionType::logical}},
-        {"value", {{ExpressionType::nodes}, ExpressionType::value}},
-    };
+// A mapping of JSONPath function extension names to their arguments and
+// return types.
+using function_signature_map =
+    std::unordered_map<std::string, FunctionExtensionTypes>;
+
+const function_signature_map DEFAULT_FUNCTION_EXTENSIONS{
+    {"count", {{ExpressionType::nodes}, ExpressionType::value}},
+    {"length", {{ExpressionType::value}, ExpressionType::value}},
+    {"match", {{ExpressionType::value, ExpressionType::value},
+                  ExpressionType::logical}},
+    {"search", {{ExpressionType::value, ExpressionType::value},
+                   ExpressionType::logical}},
+    {"value", {{ExpressionType::nodes}, ExpressionType::value}},
+};
 
 // The JSONPath query expression parser.
 //
@@ -91,7 +95,7 @@ public:
   segments_t parse(std::string_view s) const;
 
 protected:
-  std::unordered_map<std::string, FunctionExtensionTypes> m_function_extensions;
+  function_signature_map m_function_extensions;
   segments_t parse_path(TokenIterator& tokens) const;
   segments_t parse_filter_path(TokenIterator& tokens) const;
   segment_t parse_segment(TokenIterator& tokens) const;
