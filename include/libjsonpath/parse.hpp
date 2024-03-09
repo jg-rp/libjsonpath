@@ -17,8 +17,8 @@ using TokenIterator = std::vector<Token>::const_iterator;
 // JSONPath filter expression operator precedence. These constants are passed
 // to `parse_filter_expression()` when parsing prefix and infix expressions.
 constexpr int PRECEDENCE_LOWEST = 1;
-constexpr int PRECEDENCE_LOGICAL_AND = 4;
-constexpr int PRECEDENCE_LOGICAL_OR = 5;
+constexpr int PRECEDENCE_LOGICAL_OR = 4;
+constexpr int PRECEDENCE_LOGICAL_AND = 5;
 constexpr int PRECEDENCE_COMPARISON = 6;
 constexpr int PRECEDENCE_PREFIX = 7;
 
